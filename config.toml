@@ -1,0 +1,76 @@
+
+project = 'hand-demo'
+
+model_folder = '/group/plasticity/Projects/hristo_grasping/TUTORIAL-Markerless_Tracking/Tutorial_Demo/hand-demo-dlc-TuthillLab-2019-08-05' 
+
+nesting = 1
+video_extension = 'mp4'
+
+[calibration]
+# checkerboard / charuco / aruco
+board_type = "charuco"
+
+# width and height of grid
+board_size = [10, 7]
+
+# number of bits in the markers, if aruco/charuco
+board_marker_bits = 4
+
+# number of markers in dictionary, if aruco/charuco
+board_marker_dict_number = 50
+
+# length of marker side
+board_marker_length = 18.75 # mm
+
+# If aruco, length of marker separation
+# board_marker_separation_length = 1 # mm
+
+# If charuco or checkerboard, square side length
+board_square_side_length = 25 # mm
+
+animal_calibration = false
+
+fisheye = false
+
+[labeling]
+scheme = [
+   ["WRIST", "THUMB_CMC", "THUMB_MCP", "THUMB_IP", "THUMB_TIP"],
+   ["WRIST", "INDEX_FINGER_MCP", "INDEX_FINGER_PIP", "INDEX_FINGER_DIP", "INDEX_FINGER_TIP"],
+   ["WRIST", "MIDDLE_FINGER_MCP", "MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP", "MIDDLE_FINGER_TIP"],
+   ["WRIST", "RING_FINGER_MCP", "RING_FINGER_PIP", "RING_FINGER_DIP", "RING_FINGER_TIP"],
+   ["WRIST", "PINKY_MCP", "PINKY_PIP", "PINKY_DIP", "PINKY_TIP"]
+ ]
+
+[triangulation]
+triangulate = true
+cam_regex = '-cam([A-Z])'
+cam_align = "A"
+ransac = false
+optim = true
+constraints = [
+   ["WRIST", "THUMB_CMC"], ["THUMB_CMC", "THUMB_MCP"], ["THUMB_MCP", "THUMB_IP"], ["THUMB_IP", "THUMB_TIP"],
+   ["WRIST", "INDEX_FINGER_MCP"], ["INDEX_FINGER_MCP", "INDEX_FINGER_PIP"], ["INDEX_FINGER_PIP", "INDEX_FINGER_DIP"], ["INDEX_FINGER_DIP", "INDEX_FINGER_TIP"],
+   ["WRIST", "MIDDLE_FINGER_MCP"], ["MIDDLE_FINGER_MCP", "MIDDLE_FINGER_PIP"], ["MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP"], ["MIDDLE_FINGER_DIP", "MIDDLE_FINGER_TIP"],
+   ["WRIST", "RING_FINGER_MCP"], ["RING_FINGER_MCP", "RING_FINGER_PIP"], ["RING_FINGER_PIP", "RING_FINGER_DIP"], ["RING_FINGER_DIP", "RING_FINGER_TIP"],
+   ["WRIST", "PINKY_MCP"], ["PINKY_MCP", "PINKY_PIP"], ["PINKY_PIP", "PINKY_DIP"], ["PINKY_DIP", "PINKY_TIP"]
+]
+scale_smooth = 25
+scale_length = 10
+scale_length_weak = 2
+reproj_error_threshold = 3
+score_threshold = 0.6
+n_deriv_smooth = 2
+
+
+[angles]
+thumb_1 = ["THUMB_CMC", "THUMB_MCP", "THUMB_IP"]
+thumb_2 = ["THUMB_MCP", "THUMB_IP", "THUMB_TIP"]
+index_1 = ["INDEX_FINGER_MCP", "INDEX_FINGER_PIP", "INDEX_FINGER_DIP"]
+index_2 = ["INDEX_FINGER_PIP", "INDEX_FINGER_DIP", "INDEX_FINGER_TIP"]
+middle_1 = ["MIDDLE_FINGER_MCP", "MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP"]
+middle_2 = ["MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP", "MIDDLE_FINGER_TIP"]
+ring_1 = ["RING_FINGER_MCP", "RING_FINGER_PIP", "RING_FINGER_DIP"]
+ring_2 = ["RING_FINGER_PIP", "RING_FINGER_DIP", "RING_FINGER_TIP"]
+pinky_1 = ["PINKY_MCP", "PINKY_PIP", "PINKY_DIP"]
+pinky_2 = ["PINKY_PIP", "PINKY_DIP", "PINKY_TIP"]
+
