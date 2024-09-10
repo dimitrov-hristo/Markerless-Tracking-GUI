@@ -363,7 +363,7 @@ class MyApp(tk.Tk):
                                     existing_folders = False
             if existing_folders == False:
                 self.input_directory = os.path.normpath(selected_directory)
-                num_files, total_files_size_bytes, unique_recordings = annotationFolders.count_mp4_files_and_size(self.input_directory)
+                num_files, total_files_size_bytes, unique_recordings, videos_raw_folders = annotationFolders.count_mp4_files_and_size(self.input_directory)
                 self.total_files_size_MB = round(total_files_size_bytes / (1024 ** 2),2)
                 if mode == "Annotate 2D":
                     self.num_processing_files = int(num_files)
@@ -371,11 +371,11 @@ class MyApp(tk.Tk):
                     unique_recordings = annotationFolders.count_unique_csv_files(self.input_directory)
                     self.num_processing_files = int(unique_recordings)
                 else:
-                    self.num_processing_files = int(unique_recordings)
+                    self.num_processing_files = int(videos_raw_folders)
                                         
                 # Check if the conditions are met
                 if num_files > 30 or self.total_files_size_MB > 200:
-                    proceed = messagebox.askyesno("Warning", f"There are {self.num_processing_files} files (total size {self.total_files_size_MB}MB), which can take awhile to process. Are you sure you want to proceed?")
+                    proceed = messagebox.askyesno("Warning", f"There are {num_files} files (total size {self.total_files_size_MB}MB), which can take awhile to process. Are you sure you want to proceed?")
                     if proceed:
                         self.processing_window()                        
                 else:
@@ -395,6 +395,7 @@ class MyApp(tk.Tk):
         self.files_processed = 0
 
         tk.Label(self, text=f"Current Input Directory: {self.input_directory }").pack(pady=10)
+        tk.Label(self, text=f"Current Computation: {self.processing_operation }").pack(pady=10)
 
         self.progress_bar = ttk.Progressbar(self, length=400, mode='determinate')
         self.progress_bar.pack(pady=20)
@@ -402,7 +403,7 @@ class MyApp(tk.Tk):
         self.progress_label = tk.Label(self, text="Processing: Video 0/0")
         self.progress_label.pack(pady=5)
 
-        self.estimated_time_label = tk.Label(self, text="Estimated remaining time: 0 mins")
+        self.estimated_time_label = tk.Label(self, text="Estimated remaining time: Computing...")
         self.estimated_time_label.pack(pady=5)
 
         self.output_text = ScrolledText(self, height=20, width=80)
@@ -512,11 +513,16 @@ class MyApp(tk.Tk):
         self.progress_bar.update()
 
         # Update progress label
-        self.progress_label.config(text=f"Processing {self.processing_bodyPart}: Video {self.files_processed+1}/{self.num_processing_files} at location {self.fileName}")
+        if self.num_processing_files > 1:
+            self.progress_label.config(text=f"Processing {self.processing_bodyPart}: Video {self.files_processed+1}/{self.num_processing_files} at location {self.fileName}")
+        else:
+            self.progress_label.config(text=f"Processing {self.processing_bodyPart}: Folder {self.files_processed+1}/{self.num_processing_files} at location {self.fileName}")
 
         # Calculate estimated time remaining
-        if isinstance(self.elapsedTime, str):
+        if isinstance(self.elapsedTime, str) and self.num_processing_files > 1:
             self.estimated_time_label.config(text=f"Estimated remaining time: Computing...")
+        elif self.num_processing_files == 1:
+            self.estimated_time_label.config(text=f"Estimated remaining time: Track Console Below")
         else:
             avg_time_per_file = self.elapsedTime / self.files_processed
             estimated_time_remaining = avg_time_per_file * (self.num_processing_files - self.files_processed)

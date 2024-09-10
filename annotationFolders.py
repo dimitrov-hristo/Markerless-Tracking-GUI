@@ -19,10 +19,11 @@ def process_folders(input_dir, output_dir, selected_bodypart, report_callback, m
                 mp4Files+=1
                 shutil.copy(os.path.join(src_folder, filename), dest_folder)
                 if mode == "Annotate 2D":
-                    path = os.path.join(src_folder, filename)
                     report_callback(dest_folder)
+                    time.sleep(0.5)
+                    path = os.path.join(src_folder, filename)
                     run2D_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "run2D.py")
-                    execute_anaconda_command(f"conda run -n base python {run2D_dir} \"{path}\" \"{new_output_dir}\" \"{selected_bodypart}\"",report_callback)
+                    execute_anaconda_command(f"conda run -n mediaPipeEnv python {run2D_dir} \"{path}\" \"{new_output_dir}\" \"{selected_bodypart}\"",report_callback)
         if mp4Files == 0:
             report_callback("2D Annotation, Input Videos")
 
@@ -41,10 +42,11 @@ def process_folders(input_dir, output_dir, selected_bodypart, report_callback, m
                 #create_folder(target_folder)
                 for filename in os.listdir(folder_path):
                     if filename.endswith('.mp4'):
+                        report_callback(folder_path)
+                        time.sleep(0.5)
                         path = os.path.join(folder_path, filename)
                         run2D_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "run2D.py")
-                        execute_anaconda_command(f"conda run -n base python {run2D_dir} \"{path}\" \"{folder_path}\" \"{selected_bodypart}\"",report_callback)
-                        report_callback(folder_path)
+                        execute_anaconda_command(f"conda run -n mediaPipeEnv python {run2D_dir} \"{path}\" \"{folder_path}\" \"{selected_bodypart}\"",report_callback)
                     else:
                         report_callback("2D Annotation, Input Videos")
                         time.sleep(3)
@@ -184,16 +186,18 @@ def count_mp4_files_and_size(input_dir):
     total_files = 0
     total_size = 0
     unique_recordings = 0
+    video_folders = 0
     for root, dirs, files in os.walk(input_dir):
         last_folder = os.path.basename(os.path.normpath(root))
         if last_folder == 'videos-raw':
+            video_folders +=1
             unique_recordings += count_unique_recordings(root)
             for file in files:
                 if file.endswith('.mp4'):
                     total_files += 1
                     total_size += os.path.getsize(os.path.join(root, file))
 
-    return total_files, total_size, unique_recordings
+    return total_files, total_size, unique_recordings, video_folders
 
 def count_unique_recordings(folder_path):
     unique_recordings = set()
