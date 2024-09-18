@@ -7,6 +7,9 @@ import re
 import annotationFolders
 import threading
 from tkinter.scrolledtext import ScrolledText
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+import videoTrim_functions
 
 class MyApp(tk.Tk):
     def __init__(self):
@@ -40,6 +43,14 @@ class MyApp(tk.Tk):
         self.board_square_side_length = tk.StringVar(value=self.default_board_square_side_length)
         self.animal_calibration = tk.StringVar(value=self.default_animal_calibration)
         self.fisheye = tk.StringVar(value=self.default_fisheye)
+
+        self.default_start_frame = tk.StringVar(value="0")
+        self.default_stop_frame = tk.StringVar(value="1")
+        self.default_plot_frame = tk.StringVar(value="0")
+        self.default_multiTrim_val = tk.StringVar(value="1")
+        self.default_recLen_val = tk.StringVar(value="0")
+        self.default_lightOn_val = tk.StringVar(value="220")
+        self.video_ROI_location = {}
 
         self.processing_variables = {
             'leftHand': 0,
@@ -119,15 +130,22 @@ class MyApp(tk.Tk):
         label_2d_button = tk.Button(self, text="2D Video Labelling", command=lambda: self.videoProcessing_page("Label 2D"), state=state)
         label_3d_button = tk.Button(self, text="3D Video Labelling", command=lambda: self.videoProcessing_page("Label 3D"), state=state)
 
+        hand_features_button = tk.Button(self, text="Hand Features", command=self.hand_features, state=state)
+        video_trimming_button = tk.Button(self, text="Video Trimming", command=self.videoTrim_window)
+
         exit_button = tk.Button(self, text="Exit", command=self.quit)
 
-        configure_button.pack(pady=15)
-        annotate_2d_button.pack(pady=15)
-        calibrate_button.pack(pady=15)
-        annotate_3d_button.pack(pady=15)
-        label_2d_button.pack(pady=15)
-        label_3d_button.pack(pady=15)
-        exit_button.pack(pady=15)
+        button_ypadding = 15
+
+        configure_button.pack(pady=button_ypadding)
+        video_trimming_button.pack(pady=button_ypadding)
+        annotate_2d_button.pack(pady=button_ypadding)
+        calibrate_button.pack(pady=button_ypadding)
+        annotate_3d_button.pack(pady=button_ypadding)
+        label_2d_button.pack(pady=button_ypadding)
+        label_3d_button.pack(pady=button_ypadding)
+        hand_features_button.pack(pady=button_ypadding)
+        exit_button.pack(pady=button_ypadding)
 
         # Thread management
         self.current_thread_key = None
@@ -502,6 +520,8 @@ class MyApp(tk.Tk):
                         self.output_text.insert(tk.END, display_string)
 
                     self.output_text.see(tk.END)
+            elif "Video trimming" in report_string:
+                messagebox.showinfo("Video Trim Complete",  report_string)
             else:
                 messagebox.showinfo("Warning",  report_string)
                 self.closeThread_on_demand = True
@@ -715,6 +735,269 @@ class MyApp(tk.Tk):
         else:
             # Continue checking periodically
             self.after(500, self.check_thread_status)  # Check every 500 ms
+
+
+    def videoTrim_window(self):
+        self.clear_window()
+
+        # Set a larger window size for the processing window
+        self.geometry("600x400")
+        button_ypadding = 10
+        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
+        back_button.place(x=10, y=10)
+
+        manual_trim_button = tk.Button(self, text="Manual", command=lambda: self.videoTrimming_page("Manual Trimming"))
+        manual_trim_button.pack(pady=button_ypadding)
+
+        automatic_trim_button = tk.Button(self, text="Automatic\n(Lights)", command=lambda: self.videoTrimming_page("Automatic Trimming"))
+        automatic_trim_button.pack(pady=button_ypadding)
+
+        video_vis_button = tk.Button(self, text="Video\nVisualisation", command=lambda: self.videoTrimming_page("Video Visualisation"))
+        video_vis_button.pack(pady=button_ypadding)
+
+    def videoTrimming_page(self, video_operation):
+        # Select directory for annotation
+        if video_operation == "Manual Trimming":
+            selected_video_path = filedialog.askopenfilename(
+            title="Select Video File",
+            filetypes=[("Video files", "*.mp4 *.avi *.mkv *.mov *.flv"), ("All files", "*.*")])
+            if selected_video_path:
+                self.manual_videoTrim_window(os.path.normpath(selected_video_path))
+            else:
+                self.focus_force()  # Bring focus back to the main window
+                self.lift()         # Lift the window to the front
+        elif video_operation == "Automatic Trimming":
+            selected_directory = filedialog.askdirectory()
+            if selected_directory:
+                self.automatic_videoTrim_window(os.path.normpath(selected_directory))
+            else:
+                self.focus_force()  # Bring focus back to the main window
+                self.lift()         # Lift the window to the front
+
+    def manual_videoTrim_window(self,video_path):
+        
+        self.clear_window()
+
+        # Set a larger window size for the processing window
+        self.geometry("600x400")
+
+        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
+        back_button.place(x=10, y=10)
+        
+        button_ypadding = 10
+        button_xpadding = 0
+
+        # Define the layout frames
+        top_frame = tk.Frame(self)
+        top_frame.pack(pady=button_ypadding)
+
+        input_frame = tk.Frame(self)
+        input_frame.pack(pady=5)
+
+        plot_frame = tk.Frame(self)
+        plot_frame.pack(pady=button_ypadding)
+
+        # Add "Trim" button at the top
+        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.individualVid_trim(video_path, self.save_directory.get(), int(self.start_entry.get()), int(self.stop_entry.get()),[]))
+        trim_button.pack()
+
+        # Add "Start Frame" label and input box
+        start_label = tk.Label(input_frame, text="Start Frame:")
+        start_label.grid(row=0, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
+        self.start_entry = tk.Entry(input_frame, width=10, textvariable=self.default_start_frame)
+        self.start_entry.grid(row=0, column=1, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        # Add "Stop Frame" label and input box
+        stop_label = tk.Label(input_frame, text="Stop Frame:")
+        stop_label.grid(row=0, column=2, padx=button_xpadding, pady=button_ypadding, sticky="E")
+        self.stop_entry = tk.Entry(input_frame, width=10, textvariable=self.default_stop_frame)
+        self.stop_entry.grid(row=0, column=3, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        empty_label = tk.Label(input_frame, text="")
+        empty_label.grid(row=0, column=4, padx=button_xpadding, pady=button_ypadding)       
+
+        # Add "Plot Frame" label and input box
+        plot_label = tk.Label(input_frame, text="Plot Frame:")
+        plot_label.grid(row=1, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        # Add "Next" button with song symbol (right arrow)
+        prev_button = tk.Button(input_frame, text="⏮", command=lambda: self.plot_frame(-1, video_path))
+        prev_button.grid(row=1, column=1, padx=button_xpadding, pady=button_ypadding, sticky="E")
+
+        self.plot_entry = tk.Entry(input_frame, width=10, textvariable=self.default_plot_frame)
+        self.plot_entry.grid(row=1, column=2, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        # Add "Next" button with song symbol (right arrow)
+        next_button = tk.Button(input_frame, text="⏭", command=lambda: self.plot_frame(1, video_path))
+        next_button.grid(row=1, column=3, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        # Add "Plot" button that calls external function
+        plot_button = tk.Button(input_frame, text="Plot", command=lambda: self.plot_frame(0, video_path))
+        plot_button.grid(row=1, column=4, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        # Add matplotlib plot below buttons
+        self.fig = Figure(figsize=(5, 4), dpi=100)
+        self.ax = self.fig.add_subplot(111)  # Create an axis for the plot
+        frame_number = int(self.plot_entry.get())
+        videoTrim_functions.plot_frame(video_path, frame_number, self.ax)
+
+        self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack()
+
+        input_frame.grid_columnconfigure(0, weight=0)
+        input_frame.grid_columnconfigure(1, weight=0)
+        input_frame.grid_columnconfigure(2, weight=0)
+        input_frame.grid_columnconfigure(3, weight=0)
+        input_frame.grid_columnconfigure(4, weight=0)
+
+        self.update_idletasks()
+
+    def automatic_videoTrim_window(self,video_path):
+        
+        self.clear_window()
+
+        # Set a larger window size for the processing window
+        self.geometry("600x700")
+        file_extension = '.mp4'
+        
+        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
+        back_button.place(x=10, y=10)
+        
+        button_ypadding = 10
+        button_xpadding = 10
+        textbox_width = 6
+
+        top_frame = tk.Frame(self)
+        top_frame.pack(pady=button_ypadding)
+
+        input_frame = tk.Frame(self)
+        input_frame.pack(pady=5)
+
+        plot_frame = tk.Frame(self)
+        plot_frame.pack(pady=button_ypadding)
+
+        # Disable buttons if configuration not applied 
+        state = tk.NORMAL if self.video_ROI_location else tk.DISABLED
+
+        # Add "Trim" button at the top
+        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.automatic_trim(video_path, self.save_directory.get(), int(self.multiTrim_entry.get()), self.video_ROI_location, file_extension, int(self.recLen_entry.get()), self.processing_communication),state=state)
+        trim_button.pack()
+
+        # Adjust appearance of the disabled Apply button
+        if state == tk.DISABLED:
+            self.style_disabled_button(trim_button)
+        else:
+            trim_button.config(state=tk.NORMAL, bg="lightblue", fg="black")
+
+        # Add matplotlib plot below buttons
+        self.fig = Figure(figsize=(6, 5), dpi=100)
+        self.ax = self.fig.add_subplot(111)  # Create an axis for the plot
+
+        # Add "Start Frame" label and input box
+        multiTrim_label = tk.Label(input_frame, text="Multiple trims within a video:")
+        multiTrim_label.grid(row=0, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
+        self.multiTrim_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_multiTrim_val)
+        self.multiTrim_entry.grid(row=0, column=1, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        # Add "Stop Frame" label and input box
+        recLen_label = tk.Label(input_frame, text="OPTIONAL\nRecording Length (s):")
+        recLen_label.grid(row=0, column=2, padx=button_xpadding, pady=button_ypadding, sticky="E")
+        self.recLen_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_recLen_val)
+        self.recLen_entry.grid(row=0, column=3, padx=button_xpadding, pady=button_ypadding, sticky="W")    
+
+        # Add "Plot Frame" label and input box
+        lightOn_label = tk.Label(input_frame, text="Light On Threshold (0-255):")
+        lightOn_label.grid(row=1, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
+        self.lightOn_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_lightOn_val)
+        self.lightOn_entry.grid(row=1, column=1, padx=button_xpadding, pady=button_ypadding, sticky="W")   
+
+        ROI_button = tk.Button(input_frame, text="Select ROI", command=lambda: self.ROI_selection(video_path))
+        ROI_button.grid(row=1, column=2, columnspan=2, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack()
+
+        input_frame.grid_columnconfigure(0, weight=0)
+        input_frame.grid_columnconfigure(1, weight=0)
+        input_frame.grid_columnconfigure(2, weight=0)
+        input_frame.grid_columnconfigure(3, weight=0)
+
+        self.update_idletasks()
+
+    def plot_frame(self, frame_scroll, video_path):
+
+        if frame_scroll == 1:
+            current_frameNum = int(self.plot_entry.get())
+            self.plot_entry.delete(0, tk.END)  # Clear the existing value
+            self.plot_entry.insert(0, str(current_frameNum+1))  # Insert new value at the beginning
+        elif frame_scroll == -1:
+            current_frameNum = int(self.plot_entry.get())
+            self.plot_entry.delete(0, tk.END)  # Clear the existing value
+            self.plot_entry.insert(0, str(current_frameNum-1))  # Insert new value at the beginning
+
+        frame_number = int(self.plot_entry.get()) # Get the frame number from input
+        videoTrim_functions.plot_frame(video_path, frame_number, self.ax)  # Pass self.ax to the external function
+        self.canvas.draw()  # Update the canvas to reflect changes
+
+    def video_trimming(self,input_path,start_frame,stop_frame):
+        vid_name = os.path.basename(input_path)
+        base_name, ext = os.path.splitext(vid_name)
+        if not ext == '.mp4':
+            raise ValueError("The file does not have a .mp4 extension.")
+        # Find the position of '_cam[A-Z]'
+        if '_cam' not in base_name:
+            raise ValueError("Filename does not contain '_cam'.")
+        # Insert '_trimmed' before '_cam'
+        trimmed_base_name = base_name.replace('_cam', '_trimmed_cam')
+        # Construct the new filename with '_trimmed'
+        new_file_name = f"{trimmed_base_name}{ext}"
+        # Construct the new path in the output directory
+        video_output_path = os.path.join(self.save_directory.get(), new_file_name)
+
+        videoTrim_functions.trim_video_ffmpeg(input_path, video_output_path, start_frame, stop_frame)
+
+    def ROI_selection(self,input_path):
+        self.video_ROI_location = {}
+        batches = {}
+        ROI_video_rootFolder = ''
+        var = tk.BooleanVar(value=False)
+        for root, dirs, files in os.walk(input_path):
+            if any(file.endswith('.mp4') for file in files):
+                for file in files:
+                    if file.endswith('.mp4'):
+                        ROI_video_rootFolder = root
+                        # Process the .mp4 file
+                        batch_name = file.split('cam')[0]
+                        # Add the file to the corresponding batch
+                        if batch_name not in batches:
+                            batches[batch_name] = []
+                        batches[batch_name].append(file)
+
+                        
+                        #video_ROI_location[file] = {'x': x, 'y': y, 'width': width, 'height': height}
+                
+                # Exit from all loops after processing the mp4 files
+                break
+        first_batch = list(batches.keys())[0]
+        if first_batch:
+            for file in batches[first_batch]:
+                ROI_video_file = os.path.join(ROI_video_rootFolder, file)
+                print(f"Processing video file: {ROI_video_file}")
+                self.video_ROI_location[file] = videoTrim_functions.checkROI(ROI_video_file, 1, self.ax, self.canvas, var)
+
+        self.fig.clear()  # This clears the entire figure including all axes
+        self.ax = self.fig.add_subplot(111)  # Add the axis back if needed
+        self.canvas.draw()  # Redraw the canvas to show the cleared figure
+
+        print(self.video_ROI_location)
+        messagebox.showinfo("ROI Selection Complete", "ROI Selection Complete.")
+        self.automatic_videoTrim_window(os.path.normpath(input_path))
+
+    def hand_features(self):
+        calibration_string = f"Calibrating with Board Size: {self.board_size.get()}, Marker Length: {self.marker_length.get()}, Markers Number: {self.markers_dict_number.get()}, Board Type: {self.board_type.get()}"
+        print(calibration_string)
 
 # Run the application
 if __name__ == "__main__":
