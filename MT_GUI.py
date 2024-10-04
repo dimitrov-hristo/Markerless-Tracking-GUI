@@ -209,6 +209,9 @@ class MyApp(tk.Tk):
                                            state="readonly")
         videoFile_suffix_combobox.pack(pady=5)
 
+        self.file_extension.trace_add("write", self.config_file_extension_overwrite)
+        self.file_suffix.trace_add("write", self.config_file_extension_overwrite)
+
         # Apply button
         apply_button = tk.Button(self, text="Apply", state=tk.DISABLED, command=lambda: self.apply_changes("Config Page"))
         apply_button.pack(side=tk.BOTTOM, pady=10)
@@ -596,6 +599,8 @@ class MyApp(tk.Tk):
         if menu == 'Board Parameters Page':
             self.board_parameters_overwrite()
             print(f"Board Size = {self.board_size.get()}, Marker Length = {self.marker_length.get()}, Markers Number = {self.markers_dict_number.get()}, Board Type = {self.board_type.get()}")
+        if menu == 'Config Page':
+            self.change_body_annotation()
         self.changes_made = False
         self.apply_button.config(state=tk.DISABLED)
         self.style_disabled_button(self.apply_button)
@@ -679,6 +684,34 @@ class MyApp(tk.Tk):
         with open(updated_config_path, 'w') as file:
             file.write(config_content.strip() + "\n")  # Strip any trailing space and add a newline
 
+
+        print(f"Updated config.toml saved at: {updated_config_path}")
+
+    def config_file_extension_overwrite(self, *args):
+        original_config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.toml")
+        print(f"Original Config Directory: {original_config_path}")
+        # Load the existing config.toml as text
+        with open(original_config_path, 'r') as file:
+            config_content = file.read()
+
+        newExt = self.file_extension.get()
+        fileEnd = self.file_suffix.get()
+        # Define the patterns to search for
+        video_extension_pattern = r"(video_extension\s*=\s*)'[^']*'"
+        cam_regex_pattern = r"(cam_regex\s*=\s*)'[^']*'"
+
+        # Use the variables in the replacement
+        new_video_extension = rf"\1'{newExt}'"
+        new_cam_regex = rf"\1'{fileEnd}'"
+
+        # Perform the replacements
+        config_content = re.sub(video_extension_pattern, new_video_extension, config_content)
+        config_content = re.sub(cam_regex_pattern, new_cam_regex, config_content)
+
+        # Save the updated config.toml in the selected directory
+        updated_config_path = os.path.join(self.gui_directory, "config.toml")
+        with open(updated_config_path, 'w') as file:
+            file.write(config_content) 
 
         print(f"Updated config.toml saved at: {updated_config_path}")
 
@@ -1014,6 +1047,103 @@ class MyApp(tk.Tk):
     def hand_features(self):
         calibration_string = f"Calibrating with Board Size: {self.board_size.get()}, Marker Length: {self.marker_length.get()}, Markers Number: {self.markers_dict_number.get()}, Board Type: {self.board_type.get()}"
         print(calibration_string)
+
+    def change_body_annotation(self):
+        
+        if self.changes_made:
+            # The new configuration you want to use (static replacements)
+            hand_scheme = '''scheme = [
+    ["WRIST", "THUMB_CMC", "THUMB_MCP", "THUMB_IP", "THUMB_TIP"],
+    ["WRIST", "INDEX_FINGER_MCP", "INDEX_FINGER_PIP", "INDEX_FINGER_DIP", "INDEX_FINGER_TIP"],
+    ["WRIST", "MIDDLE_FINGER_MCP", "MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP", "MIDDLE_FINGER_TIP"],
+    ["WRIST", "RING_FINGER_MCP", "RING_FINGER_PIP", "RING_FINGER_DIP", "RING_FINGER_TIP"],
+    ["WRIST", "PINKY_MCP", "PINKY_PIP", "PINKY_DIP", "PINKY_TIP"]
+]'''
+
+            hand_constraints = '''constraints = [
+    ["WRIST", "THUMB_CMC"], ["THUMB_CMC", "THUMB_MCP"], ["THUMB_MCP", "THUMB_IP"], ["THUMB_IP", "THUMB_TIP"],
+    ["WRIST", "INDEX_FINGER_MCP"], ["INDEX_FINGER_MCP", "INDEX_FINGER_PIP"], ["INDEX_FINGER_PIP", "INDEX_FINGER_DIP"], ["INDEX_FINGER_DIP", "INDEX_FINGER_TIP"],
+    ["WRIST", "MIDDLE_FINGER_MCP"], ["MIDDLE_FINGER_MCP", "MIDDLE_FINGER_PIP"], ["MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP"], ["MIDDLE_FINGER_DIP", "MIDDLE_FINGER_TIP"],
+    ["WRIST", "RING_FINGER_MCP"], ["RING_FINGER_MCP", "RING_FINGER_PIP"], ["RING_FINGER_PIP", "RING_FINGER_DIP"], ["RING_FINGER_DIP", "RING_FINGER_TIP"],
+    ["WRIST", "PINKY_MCP"], ["PINKY_MCP", "PINKY_PIP"], ["PINKY_PIP", "PINKY_DIP"], ["PINKY_DIP", "PINKY_TIP"]
+]'''
+
+            hand_angles = '''thumb_1 = ["THUMB_CMC", "THUMB_MCP", "THUMB_IP"]
+thumb_2 = ["THUMB_MCP", "THUMB_IP", "THUMB_TIP"]
+index_1 = ["INDEX_FINGER_MCP", "INDEX_FINGER_PIP", "INDEX_FINGER_DIP"]
+index_2 = ["INDEX_FINGER_PIP", "INDEX_FINGER_DIP", "INDEX_FINGER_TIP"]
+middle_1 = ["MIDDLE_FINGER_MCP", "MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP"]
+middle_2 = ["MIDDLE_FINGER_PIP", "MIDDLE_FINGER_DIP", "MIDDLE_FINGER_TIP"]
+ring_1 = ["RING_FINGER_MCP", "RING_FINGER_PIP", "RING_FINGER_DIP"]
+ring_2 = ["RING_FINGER_PIP", "RING_FINGER_DIP", "RING_FINGER_TIP"]
+pinky_1 = ["PINKY_MCP", "PINKY_PIP", "PINKY_DIP"]
+pinky_2 = ["PINKY_PIP", "PINKY_DIP", "PINKY_TIP"]
+'''
+
+            #
+            body_scheme = '''scheme = [
+    ["LEFT_SHOULDER","LEFT_ELBOW", "LEFT_WRIST", "LEFT_PINKY"],
+    ["LEFT_SHOULDER","LEFT_ELBOW", "LEFT_WRIST", "LEFT_INDEX"],
+    ["LEFT_SHOULDER","LEFT_ELBOW", "LEFT_WRIST", "LEFT_THUMB"],
+    ["RIGHT_SHOULDER","RIGHT_ELBOW", "RIGHT_WRIST", "RIGHT_PINKY"],
+    ["RIGHT_SHOULDER","RIGHT_ELBOW", "RIGHT_WRIST", "RIGHT_INDEX"],
+    ["RIGHT_SHOULDER","RIGHT_ELBOW", "RIGHT_WRIST", "RIGHT_THUMB"],
+    ["RIGHT_SHOULDER", "LEFT_SHOULDER"],
+    ["RIGHT_SHOULDER", "RIGHT_HIP", "RIGHT_KNEE", "RIGHT_ANKLE", "RIGHT_HEEL"],
+    ["RIGHT_SHOULDER", "RIGHT_HIP", "RIGHT_KNEE", "RIGHT_ANKLE",      "RIGHT_FOOT_INDEX"],
+    ["LEFT_SHOULDER", "LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE", "LEFT_HEEL"],
+    ["LEFT_SHOULDER", "LEFT_HIP", "LEFT_KNEE", "LEFT_ANKLE", "LEFT_FOOT_INDEX"],
+    ["MOUTH_RIGHT", "MOUTH_LEFT"],
+    ["RIGHT_EAR", "RIGHT_EYE_OUTER", "RIGHT_EYE", "RIGHT_EYE_INNER", "NOSE"],
+    ["LEFT_EAR", "LEFT_EYE_OUTER", "LEFT_EYE", "LEFT_EYE_INNER", "NOSE"]
+    ]
+'''
+
+            body_constraints = '''constraints = [
+    ["NOSE","LEFT_EYE_INNER"],["NOSE","RIGHT_EYE_INNER"],["LEFT_EYE_INNER", "LEFT_EYE"],["LEFT_EYE", "LEFT_EYE_OUTER"],
+    ["RIGHT_EYE_INNER", "RIGHT_EYE"],["RIGHT_EYE", "RIGHT_EYE_OUTER"],["LEFT_EYE_OUTER", "LEFT_EAR"],["RIGHT_EYE_OUTER","RIGHT_EAR"],
+    ["MOUTH_LEFT", "MOUTH_RIGHT"],["LEFT_SHOULDER", "RIGHT_SHOULDER"],["LEFT_SHOULDER", "LEFT_ELBOW"],["LEFT_ELBOW", "LEFT_WRIST"],
+    ["LEFT_WRIST", "LEFT_PINKY"],["LEFT_WRIST", "LEFT_THUMB"],["LEFT_WRIST", "LEFT_INDEX"],["LEFT_INDEX","LEFT_THUMB"],
+    ["LEFT_SHOULDER", "LEFT_HIP"],["LEFT_HIP","RIGHT_HIP"],["LEFT_HIP","LEFT_KNEE"],["LEFT_KNEE","LEFT_ANKLE"],
+["LEFT_ANKLE", "LEFT_HEEL"],["LEFT_ANKLE", "LEFT_FOOT_INDEX"],["LEFT_FOOT_INDEX", "LEFT_HEEL"],["RIGHT_SHOULDER", "RIGHT_ELBOW"],
+    ["RIGHT_ELBOW", "RIGHT_WRIST"],["RIGHT_WRIST", "RIGHT_THUMB"],["RIGHT_WRIST", "RIGHT_INDEX"],["RIGHT_INDEX","RIGHT_PINKY"],
+["RIGHT_WRIST", "RIGHT_PINKY"],["RIGHT_SHOULDER", "RIGHT_HIP"],["RIGHT_HIP","RIGHT_KNEE"],["RIGHT_KNEE","RIGHT_ANKLE"],
+["RIGHT_ANKLE", "RIGHT_HEEL"],["RIGHT_ANKLE", "RIGHT_FOOT_INDEX"],["RIGHT_FOOT_INDEX", "RIGHT_HEEL"]
+]'''
+
+            body_angles = '''right_elbow_flexion = ["RIGHT_SHOULDER", "RIGHT_ELBOW", "RIGHT_WRIST"]
+left_elbow_flexion = ["LEFT_SHOULDER", "LEFT_ELBOW", "LEFT_WRIST"]
+'''
+
+            if self.full_body.get():
+                selected_scheme = body_scheme
+                selected_constraints = body_constraints
+                selected_angles = body_angles
+            else:
+                selected_scheme = hand_scheme
+                selected_constraints = hand_constraints
+                selected_angles = hand_angles
+            original_config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.toml")
+            print(f"Original Config Directory: {original_config_path}")
+            # Load the existing config.toml as text
+            with open(original_config_path, 'r') as file:
+                content = file.read()
+
+            # Update the [labeling] scheme section
+            content = re.sub(r'\[labeling\]\s+scheme\s*=\s*\[.*?\](\s*],?)', f'[labeling]\n{selected_scheme}', content, flags=re.DOTALL)
+                
+            # Update the [triangulation] constraints section
+            content = re.sub(r'constraints\s*=\s*\[.*?\](\s*],?)', f'{selected_constraints}', content, flags=re.DOTALL)
+
+            # Update the [angles] section
+            content = re.sub(r'\[angles\].*?$', f'[angles]\n{selected_angles}', content, flags=re.DOTALL)
+
+            # Save the updated config.toml in the selected directory
+            updated_config_path = os.path.join(self.gui_directory, "config.toml")
+            with open(updated_config_path, 'w') as file:
+                file.write(content) 
+
+            print(f"Updated config.toml saved at: {updated_config_path}")
 
 # Run the application
 if __name__ == "__main__":
