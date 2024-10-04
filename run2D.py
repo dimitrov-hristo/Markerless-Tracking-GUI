@@ -67,7 +67,7 @@ def annotate_2D(mp_hands, bodyparts, path, cap, points,selected_bodypart, output
         data = points.reshape(n_frames, n_joints*c)
         frameindex=list([i for i in range(n_frames)])
 
-        scorer = 'DLC_resnet50_150000'
+        scorer = 'DLC_Model_Name'
         index = pd.MultiIndex.from_product([[scorer], orderofbpincsv, ['x', 'y', 'likelihood']],names=['scorer', 'bodyparts', 'coords'])
         frame = pd.DataFrame(np.array(data,dtype=float), columns = index, index = frameindex)
         

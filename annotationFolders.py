@@ -6,7 +6,7 @@ import threading
 import sys
 
 
-def process_folders(input_dir, output_dir, selected_bodypart, report_callback, mode, config_dir, stop_event):
+def process_folders(input_dir, output_dir, selected_bodypart, video_file_extension, report_callback, mode, config_dir, stop_event):
 
     def create_folder(path):
         if not os.path.exists(path):
@@ -15,7 +15,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, report_callback, m
     def copy_mp4_files(src_folder, dest_folder, new_output_dir):
         mp4Files = 0
         for filename in os.listdir(src_folder):
-            if filename.endswith('.mp4'):
+            if filename.endswith(video_file_extension):
                 mp4Files+=1
                 shutil.copy(os.path.join(src_folder, filename), dest_folder)
                 if mode == "Annotate 2D":
@@ -41,7 +41,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, report_callback, m
                 print(stop_event.is_set())
                 #create_folder(target_folder)
                 for filename in os.listdir(folder_path):
-                    if filename.endswith('.mp4'):
+                    if filename.endswith(video_file_extension):
                         report_callback(folder_path)
                         time.sleep(0.5)
                         path = os.path.join(folder_path, filename)
@@ -121,7 +121,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, report_callback, m
                 # Iterate over all files in the folder
                 for file in os.listdir(folder_path):
                     # Check if the file ends with .mp4
-                    if file.endswith('.mp4'):
+                    if file.endswith(video_file_extension):
                         mp4_count += 1
 
                 # FFMPEG CANNOT PRODUCE A COMBINED TILE VIDEO FOR MORE THAN 4 INDIVIDUAL VIDEOS
@@ -164,7 +164,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, report_callback, m
         for root, dirs, files in os.walk(base_dir):
             if stop_event.is_set():
                     break
-            if any(file.endswith('.mp4') for file in files):
+            if any(file.endswith(video_file_extension) for file in files):
                 processed_files_number += 1
                 if stop_event.is_set():
                     break
@@ -182,7 +182,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, report_callback, m
     # Start processing
     find_and_process_folders(input_dir)
 
-def count_mp4_files_and_size(input_dir):
+def count_video_files_and_size(input_dir,video_file_extension):
     total_files = 0
     total_size = 0
     unique_recordings = 0
@@ -193,16 +193,16 @@ def count_mp4_files_and_size(input_dir):
             video_folders +=1
             unique_recordings += count_unique_recordings(root)
             for file in files:
-                if file.endswith('.mp4'):
+                if file.endswith(video_file_extension):
                     total_files += 1
                     total_size += os.path.getsize(os.path.join(root, file))
 
     return total_files, total_size, unique_recordings, video_folders
 
-def count_unique_recordings(folder_path):
+def count_unique_recordings(folder_path, video_file_extension):
     unique_recordings = set()
     for filename in os.listdir(folder_path):
-        if filename.endswith(".mp4") and "cam" in filename:
+        if filename.endswith(video_file_extension) and "cam" in filename:
             recording_identifier = filename.split("cam")[0]
             unique_recordings.add(recording_identifier)
     return len(unique_recordings)

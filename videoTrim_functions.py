@@ -111,17 +111,17 @@ def checkROI(videoPath, ROI_frame, ax, canvas, var):
         print("No ROI was selected.")
         return None
 
-def individualVid_trim(input_path, saving_dir, start_frame, stop_frame):
+def individualVid_trim(input_path, saving_dir, video_file_extension, start_frame, stop_frame, video_file_suffix):
 
     vid_name = os.path.basename(input_path)
     base_name, ext = os.path.splitext(vid_name)
-    if not ext == '.mp4':
-        raise ValueError("The file does not have a .mp4 extension.")
+    if not ext == video_file_extension:
+        raise ValueError("The file does not have the selected video file extension at configuration.")
     # Find the position of '_cam[A-Z]'
-    if '_cam' not in base_name:
-        raise ValueError("Filename does not contain '_cam'.")
+    if video_file_suffix not in base_name:
+        raise ValueError(f"Filename does not contain '{video_file_suffix}'.")
     # Insert '_trimmed' before '_cam'
-    trimmed_base_name = base_name.replace('_cam', '_trimmed_cam')
+    trimmed_base_name = base_name.replace(video_file_suffix, '_trimmed' + video_file_suffix)
     # Construct the new filename with '_trimmed'
     new_file_name = f"{trimmed_base_name}{ext}"
     video_output_path = os.path.join(saving_dir, new_file_name)
@@ -135,7 +135,7 @@ def individualVid_trim(input_path, saving_dir, start_frame, stop_frame):
     trimmed = video.subclip((start_frame/videoFPS), (stop_frame/videoFPS) + bufferTime)
     trimmed.write_videofile(video_output_path, codec='libx264', audio_codec='aac', fps=videoFPS)
 
-def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension, recording_length, report_callback):
+def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension, file_suffix, recording_length, report_callback):
     print("Automatic trim")
 
     potentialErrorList = []
@@ -187,7 +187,7 @@ def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension
                         # Extract the letter and file pair
                         for file in files:
                             # Use the escaped extension in the regex
-                            match = re.search(rf'_cam([A-Z]){escaped_extension}$', file)
+                            match = re.search(rf'{file_suffix}\.{escaped_extension}$', file)
                             if match:
                                 letter = match.group(1)
                                 file_dict[letter] = file

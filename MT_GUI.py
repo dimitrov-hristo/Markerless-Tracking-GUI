@@ -28,6 +28,8 @@ class MyApp(tk.Tk):
         self.default_board_type = "Charuco"
         self.default_animal_calibration = "false"
         self.default_fisheye = "false"
+        self.default_file_extension = '.mp4'
+        self.default_file_suffix = '-cam([A-Z])'
 
         # Define shared variables with default values
         self.save_directory = tk.StringVar(value=self.default_save_directory)
@@ -43,6 +45,8 @@ class MyApp(tk.Tk):
         self.board_square_side_length = tk.StringVar(value=self.default_board_square_side_length)
         self.animal_calibration = tk.StringVar(value=self.default_animal_calibration)
         self.fisheye = tk.StringVar(value=self.default_fisheye)
+        self.file_extension = tk.StringVar(value=self.default_file_extension)
+        self.file_suffix = tk.StringVar(value=self.default_file_suffix)
 
         self.default_start_frame = tk.StringVar(value="0")
         self.default_stop_frame = tk.StringVar(value="1")
@@ -194,6 +198,16 @@ class MyApp(tk.Tk):
         tk.Checkbutton(self, text="Left Hand", variable=self.left_hand, command=self.enable_apply).pack(pady=5)
         tk.Checkbutton(self, text="Right Hand", variable=self.right_hand, command=self.enable_apply).pack(pady=5)
         tk.Checkbutton(self, text="Full Body", variable=self.full_body, command=self.enable_apply).pack(pady=5)
+
+        tk.Label(self, text="Video File Extension:").pack(pady=5)
+        videoFile_extension_combobox = ttk.Combobox(self, textvariable=self.file_extension, values=['mp4', 'avi','mov', 'mpeg', 'flv', 'mkv'], 
+                                           state="readonly")
+        videoFile_extension_combobox.pack(pady=5)
+
+        tk.Label(self, text="Video File Naming Suffix:").pack(pady=5)
+        videoFile_suffix_combobox = ttk.Combobox(self, textvariable=self.file_suffix, values=['-cam([A-Z])', '_cam([A-Z])', '-cam([1-9])', '_cam([1-9])', '-cam([a-z])', '_cam([a-z])'], 
+                                           state="readonly")
+        videoFile_suffix_combobox.pack(pady=5)
 
         # Apply button
         apply_button = tk.Button(self, text="Apply", state=tk.DISABLED, command=lambda: self.apply_changes("Config Page"))
@@ -381,7 +395,7 @@ class MyApp(tk.Tk):
                                     existing_folders = False
             if existing_folders == False:
                 self.input_directory = os.path.normpath(selected_directory)
-                num_files, total_files_size_bytes, unique_recordings, videos_raw_folders = annotationFolders.count_mp4_files_and_size(self.input_directory)
+                num_files, total_files_size_bytes, unique_recordings, videos_raw_folders = annotationFolders.count_video_files_and_size(self.input_directory, self.file_extension.get())
                 self.total_files_size_MB = round(total_files_size_bytes / (1024 ** 2),2)
                 if mode == "Annotate 2D":
                     self.num_processing_files = int(num_files)
@@ -603,7 +617,8 @@ class MyApp(tk.Tk):
             else:
                 self.calibrationVid_directory = os.path.normpath(calibrationVid_directory)
             
-            contains_mp4 = any(file.endswith('.mp4') for file in os.listdir(self.calibrationVid_directory) if os.path.isfile(os.path.join(self.calibrationVid_directory, file)))
+
+            contains_mp4 = any(file.endswith(self.file_extension.get()) for file in os.listdir(self.calibrationVid_directory) if os.path.isfile(os.path.join(self.calibrationVid_directory, file)))
             
             if contains_mp4:
                 calibration_file_names = ["calibration.toml", "detections.pickle"]
@@ -631,7 +646,7 @@ class MyApp(tk.Tk):
 
                     self.calibration_window()
             else:
-                print(f"Calibration Video Directory: {self.calibrationVid_directory} Does Not Contain Any MP4 Videos")
+                print(f"Calibration Video Directory: {self.calibrationVid_directory} Does Not Contain Any Videos With The Selected Video File Extension From Configuration")
 
     def board_parameters_overwrite(self):
         # Path to the original config.toml file
@@ -695,7 +710,7 @@ class MyApp(tk.Tk):
                             self.processing_bodyPart = direction + "_Hand"
 
                         self.startProcTime = time.perf_counter()
-                        self.threads[thread_key] = threading.Thread(target=annotationFolders.process_folders, args=(self.input_directory,self.save_directory.get(),direction,self.processing_communication,self.processing_operation,self.gui_directory,self.stop_events[thread_key]))
+                        self.threads[thread_key] = threading.Thread(target=annotationFolders.process_folders, args=(self.input_directory,self.save_directory.get(),direction, self.file_extension.get(),self.processing_communication,self.processing_operation,self.gui_directory,self.stop_events[thread_key]))
                         self.threads[thread_key].start()
                         print(f"Thread for {direction} started.")
                 elif not self.threads[thread_key].is_alive():
@@ -760,7 +775,7 @@ class MyApp(tk.Tk):
         if video_operation == "Manual Trimming":
             selected_video_path = filedialog.askopenfilename(
             title="Select Video File",
-            filetypes=[("Video files", "*.mp4 *.avi *.mkv *.mov *.flv"), ("All files", "*.*")])
+            filetypes=[("Video files", "*.mp4 *.avi *.mkv *.mov *.flv *.mpeg"), ("All files", "*.*")])
             if selected_video_path:
                 self.manual_videoTrim_window(os.path.normpath(selected_video_path))
             else:
@@ -797,8 +812,9 @@ class MyApp(tk.Tk):
         plot_frame = tk.Frame(self)
         plot_frame.pack(pady=button_ypadding)
 
+        vidFile_suffix = self.file_suffix.get()
         # Add "Trim" button at the top
-        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.individualVid_trim(video_path, self.save_directory.get(), int(self.start_entry.get()), int(self.stop_entry.get()),[]))
+        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.individualVid_trim(video_path, self.save_directory.get(), self.file_extension.get(), int(self.start_entry.get()), int(self.stop_entry.get()),vidFile_suffix[0:4]))
         trim_button.pack()
 
         # Add "Start Frame" label and input box
@@ -859,7 +875,6 @@ class MyApp(tk.Tk):
 
         # Set a larger window size for the processing window
         self.geometry("600x700")
-        file_extension = '.mp4'
         
         back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
         back_button.place(x=10, y=10)
@@ -881,7 +896,7 @@ class MyApp(tk.Tk):
         state = tk.NORMAL if self.video_ROI_location else tk.DISABLED
 
         # Add "Trim" button at the top
-        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.automatic_trim(video_path, self.save_directory.get(), int(self.multiTrim_entry.get()), self.video_ROI_location, file_extension, int(self.recLen_entry.get()), self.processing_communication),state=state)
+        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.automatic_trim(video_path, self.save_directory.get(), int(self.multiTrim_entry.get()), self.video_ROI_location, self.file_extension.get(), self.file_suffix.get(), int(self.recLen_entry.get()), self.processing_communication),state=state)
         trim_button.pack()
 
         # Adjust appearance of the disabled Apply button
@@ -944,13 +959,14 @@ class MyApp(tk.Tk):
     def video_trimming(self,input_path,start_frame,stop_frame):
         vid_name = os.path.basename(input_path)
         base_name, ext = os.path.splitext(vid_name)
-        if not ext == '.mp4':
-            raise ValueError("The file does not have a .mp4 extension.")
+        file_suffix = self.file_suffix.get()
+        if not ext == self.file_extension.get():
+            raise ValueError("The file does not have the video file extension selected at Configuration.")
         # Find the position of '_cam[A-Z]'
-        if '_cam' not in base_name:
-            raise ValueError("Filename does not contain '_cam'.")
+        if file_suffix[0:4] not in base_name:
+            raise ValueError(f"Filename does not contain '{file_suffix[0:4]}'.")
         # Insert '_trimmed' before '_cam'
-        trimmed_base_name = base_name.replace('_cam', '_trimmed_cam')
+        trimmed_base_name = base_name.replace(file_suffix[0:4], '_trimmed' + file_suffix[0:4])
         # Construct the new filename with '_trimmed'
         new_file_name = f"{trimmed_base_name}{ext}"
         # Construct the new path in the output directory
@@ -964,9 +980,9 @@ class MyApp(tk.Tk):
         ROI_video_rootFolder = ''
         var = tk.BooleanVar(value=False)
         for root, dirs, files in os.walk(input_path):
-            if any(file.endswith('.mp4') for file in files):
+            if any(file.endswith(self.file_extension.get()) for file in files):
                 for file in files:
-                    if file.endswith('.mp4'):
+                    if file.endswith(self.file_extension.get()):
                         ROI_video_rootFolder = root
                         # Process the .mp4 file
                         batch_name = file.split('cam')[0]
