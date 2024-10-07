@@ -925,11 +925,13 @@ class MyApp(tk.Tk):
         plot_frame = tk.Frame(self)
         plot_frame.pack(pady=button_ypadding)
 
+        vidFile_suffix = self.file_suffix.get()
+
         # Disable buttons if configuration not applied 
         state = tk.NORMAL if self.video_ROI_location else tk.DISABLED
 
         # Add "Trim" button at the top
-        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.automatic_trim(video_path, self.save_directory.get(), int(self.multiTrim_entry.get()), self.video_ROI_location, self.file_extension.get(), self.file_suffix.get(), int(self.recLen_entry.get()), self.processing_communication),state=state)
+        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.automatic_trim(video_path, self.save_directory.get(), int(self.multiTrim_entry.get()), self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], int(self.recLen_entry.get()), self.processing_communication),state=state)
         trim_button.pack()
 
         # Adjust appearance of the disabled Apply button

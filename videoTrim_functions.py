@@ -144,7 +144,7 @@ def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension
     fileCount=0
     # Iterate over files in the folder
     for root, dirs, files in os.walk(input_path):
-        
+
         if not dirs and files:
             sorted_video_files = sorted(files)
         
@@ -162,7 +162,7 @@ def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension
                     vid_ROI_name = list(filter(lambda x: file_name[-8:-4] in x, ROIs))[0]
                     vid_ROI = ROIs[vid_ROI_name]
                     print(vid_ROI)
-                    on_array,off_array,total_frames = detectLED.detectLightChange(current_video_path, vid_ROI, multiple_trims)
+                    on_array,off_array,total_frames = detectLED.detectLightChange(current_video_path, vid_ROI, recording_length, multiple_trims)
                     tempArray.append(on_array)
 
                     if multiple_trims > 1:
@@ -173,9 +173,9 @@ def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension
                             else: 
                                 stop_frame = off_array[ij] + 1
 
-                            individualVid_trim(current_video_path, current_save_dir, start_frame, stop_frame)
+                            individualVid_trim(current_video_path, current_save_dir, file_extension, start_frame, stop_frame, file_suffix)
                     else:
-                        individualVid_trim(current_video_path, current_save_dir, on_array, off_array)
+                        individualVid_trim(current_video_path, current_save_dir, file_extension, on_array, off_array, file_suffix)
 
                     if fileCount == len(video_naming_list):
                         # Escape the file extension for regex usage (in case there are special characters like '.' in it)
