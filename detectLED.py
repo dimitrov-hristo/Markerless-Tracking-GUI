@@ -40,6 +40,7 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
                 light_off_array[light_off_inc] = video_length-1
             if light_on_array[light_on_inc] == 0:
                 light_on_array[light_on_inc] = 1
+                light_off_array[light_off_inc] = 2
             break   
 
         frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
@@ -75,6 +76,7 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             if light_on_array[light_on_inc] == 0:
                 light_on_array[light_on_inc] = 1
+                light_off_array[light_off_inc] = 2
             if light_off_array[light_off_inc] >= video_length:
                 print('longer recording')
                 light_off_array[light_off_inc] = video_length-1
