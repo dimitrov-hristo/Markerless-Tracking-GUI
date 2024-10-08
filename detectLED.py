@@ -58,7 +58,7 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
             light_on=True                
         elif recording_length > 0 and light_on:
             print(f"Recording Length cut at {recording_length} seconds")
-            light_off_array[light_off_inc] = (recording_length*60) + 1
+            light_off_array[light_off_inc] = light_on_array[light_on_inc - 1] + (recording_length*60) + 1
             if light_off_array[light_off_inc] >= video_length:
                 print('longer recording')
                 light_off_array[light_off_inc] = video_length-1
@@ -72,14 +72,15 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
             light_off_array[light_off_inc] = frame_number
             light_off_inc +=1
             light_on=False
-        
+
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            if light_on_array[light_on_inc] == 0:
-                light_on_array[light_on_inc] = 1
-                light_off_array[light_off_inc] = 2
-            if light_off_array[light_off_inc] >= video_length:
-                print('longer recording')
-                light_off_array[light_off_inc] = video_length-1
+            #Catch statements for any errors in light detection
+            #e.g. no light is detected or no light-off event is detected
+            if light_on_array[light_on_inc-1] == 0:
+                light_on_array[light_on_inc-1] = 1
+                light_off_array[light_off_inc-1] = 2
+            elif light_off_array[light_off_inc-1] <= light_on_array[light_on_inc-1]:
+                light_off_array[light_off_inc-1] = light_on_array[light_on_inc-1] + 1
             break
         
         frame_number += 1

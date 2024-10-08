@@ -115,7 +115,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
                 command = 'anipose label-3d'
                 execute_anaconda_command(command,report_callback)
 
-                unique_recordings = count_unique_recordings(folder_path)
+                unique_recordings = count_unique_recordings(folder_path, video_file_extension)
                 mp4_count = 0
 
                 # Iterate over all files in the folder
@@ -191,7 +191,7 @@ def count_video_files_and_size(input_dir,video_file_extension):
         last_folder = os.path.basename(os.path.normpath(root))
         if last_folder == 'videos-raw':
             video_folders +=1
-            unique_recordings += count_unique_recordings(root)
+            unique_recordings += count_unique_recordings(root, video_file_extension)
             for file in files:
                 if file.endswith(video_file_extension):
                     total_files += 1
