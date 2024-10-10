@@ -827,7 +827,7 @@ class MyApp(tk.Tk):
         self.clear_window()
 
         # Set a larger window size for the processing window
-        self.geometry("600x400")
+        self.geometry("1500x900")
 
         back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
         back_button.place(x=10, y=10)
@@ -885,10 +885,11 @@ class MyApp(tk.Tk):
         plot_button.grid(row=1, column=4, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         # Add matplotlib plot below buttons
-        self.fig = Figure(figsize=(5, 4), dpi=100)
+        self.fig = Figure(figsize=(5, 3), dpi=300)
         self.ax = self.fig.add_subplot(111)  # Create an axis for the plot
         frame_number = int(self.plot_entry.get())
         videoTrim_functions.plot_frame(video_path, frame_number, self.ax)
+        self.fig.tight_layout(pad=0.5)
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.draw()
@@ -907,7 +908,7 @@ class MyApp(tk.Tk):
         self.clear_window()
 
         # Set a larger window size for the processing window
-        self.geometry("600x700")
+        self.geometry("1500x900")
         
         back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
         back_button.place(x=10, y=10)
@@ -941,8 +942,10 @@ class MyApp(tk.Tk):
             trim_button.config(state=tk.NORMAL, bg="lightblue", fg="black")
 
         # Add matplotlib plot below buttons
-        self.fig = Figure(figsize=(6, 5), dpi=100)
+        self.fig = Figure(figsize=(5, 3), dpi=300)
         self.ax = self.fig.add_subplot(111)  # Create an axis for the plot
+        self.ax.axis('off')
+        self.fig.tight_layout(pad=0.5)
 
         # Add "Start Frame" label and input box
         multiTrim_label = tk.Label(input_frame, text="Multiple trims within a video:")

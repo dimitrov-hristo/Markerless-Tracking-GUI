@@ -18,8 +18,8 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
     print(video_length)
 
     frame_number=0
-    light_on_array = np.zeros((run_nums,1))
-    light_off_array = np.zeros((run_nums,1))
+    light_on_array = np.ones((run_nums,1))
+    light_off_array = np.ones((run_nums,1)) + 1
     
     x = vid_ROI[0]
     y = vid_ROI[1]
@@ -30,25 +30,27 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
     light_on_frameNumb=0
     light_on_inc = 0
     light_off_inc = 0
+    frame_off = 20
+
+    pixelNum_threshold = 1
+    pixelIntensity_threshold = 245
     
     while True:
         ret, frame = cap.read()
 
         if not ret:
-            if light_off_array[light_off_inc] >= video_length:
-                print('longer recording')
-                light_off_array[light_off_inc] = video_length-1
-            if light_on_array[light_on_inc] == 0:
-                light_on_array[light_on_inc] = 1
-                light_off_array[light_off_inc] = 2
+            if light_on_inc > 0 and light_off_array[light_on_inc-1] <= light_on_array[light_on_inc-1]:
+                light_off_array[light_on_inc-1] = light_on_array[light_on_inc-1] + 1
             break   
 
+        if light_off_inc == run_nums:
+            break
         frame_number = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
         frameROI = frame[y:y+height, x:x+width]
         roiRed = frameROI[:, :,2]
-        redPixels = sum(sum(row) for row in roiRed>245)
+        redPixels = sum(sum(row) for row in roiRed > pixelIntensity_threshold)
 
-        if redPixels>1 and light_on==False and frame_number>80:
+        if redPixels > pixelNum_threshold and light_on==False and frame_number>frame_off:
             print("Light turned on!")
             print(frame_number)
             
@@ -57,40 +59,37 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
             light_on_inc += 1
             light_on=True                
         elif recording_length > 0 and light_on:
-            print(f"Recording Length cut at {recording_length} seconds")
             light_off_array[light_off_inc] = light_on_array[light_on_inc - 1] + (recording_length*60) + 1
             if light_off_array[light_off_inc] >= video_length:
                 print('longer recording')
                 light_off_array[light_off_inc] = video_length-1
+            frame_off = light_off_array[light_off_inc]
             light_off_inc +=1
             light_on=False
             if run_nums == 1:
                 break
-        elif redPixels<1 and light_on and frame_number >= light_on_frameNumb+30:
+        elif redPixels < pixelNum_threshold and light_on and frame_number >= light_on_frameNumb+30:
             print("Light turned off!")
             print(frame_number)
             light_off_array[light_off_inc] = frame_number
+            frame_off = light_off_array[light_off_inc]
             light_off_inc +=1
             light_on=False
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            #Catch statements for any errors in light detection
-            #e.g. no light is detected or no light-off event is detected
-            if light_on_array[light_on_inc-1] == 0:
-                light_on_array[light_on_inc-1] = 1
-                light_off_array[light_off_inc-1] = 2
-            elif light_off_array[light_off_inc-1] <= light_on_array[light_on_inc-1]:
-                light_off_array[light_off_inc-1] = light_on_array[light_on_inc-1] + 1
+            #Catch statements to detected if light-on event is detected BUT
+            # the light-off event is missing
+            if light_on_inc > 0 and light_off_array[light_on_inc-1] <= light_on_array[light_on_inc-1]:
+                light_off_array[light_on_inc-1] = light_on_array[light_on_inc-1] + 1
             break
-        
-        frame_number += 1
-        
+                
     cap.release()
     cv2.destroyAllWindows()
 
     if run_nums < 2:
         light_on_array = int(light_on_array[0][0])
         light_off_array = int(light_off_array[0][0])
+        
     return light_on_array,light_off_array,video_length
 
 #video_path = 'C:\\Users\\ej06\\Coins_analysis\\CT_005\Day3\\Coin_task\\Coin_task_1-camA.mp4'

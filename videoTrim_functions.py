@@ -25,8 +25,8 @@ def plot_frame(video_path, frame_number, gui_ax):
         gui_ax.clear()  # Clear previous plot
         gui_ax.set_title('Frame {}'.format(frame_number))
         gui_ax.axis('off')
-        gui_ax.imshow(frame_rgb)  # Plot the frame
-        
+        gui_ax.imshow(frame_rgb, aspect='auto')  # Plot the frame
+        #gui_ax.set_position([0.1, 0.1, 1, 1])
 
     cap.release()
 
@@ -53,7 +53,8 @@ def checkROI(videoPath, ROI_frame, ax, canvas, var):
     
     # Clear previous rectangles and frame content
     ax.clear()  # This clears any previous frame and overlays (including old rectangles)
-    ax.imshow(frame_rgb)
+    ax.axis('off')
+    ax.imshow(frame_rgb, aspect='auto')
     
     # Redraw the canvas (for Tkinter)
     canvas.draw()
@@ -111,7 +112,7 @@ def checkROI(videoPath, ROI_frame, ax, canvas, var):
         print("No ROI was selected.")
         return None
 
-def individualVid_trim(input_path, saving_dir, video_file_extension, start_frame, stop_frame, video_file_suffix):
+def individualVid_trim(input_path, saving_dir, video_file_extension, start_frame, stop_frame, video_file_suffix, run_num):
 
     vid_name = os.path.basename(input_path)
     base_name, ext = os.path.splitext(vid_name)
@@ -121,7 +122,7 @@ def individualVid_trim(input_path, saving_dir, video_file_extension, start_frame
     if video_file_suffix not in base_name:
         raise ValueError(f"Filename does not contain '{video_file_suffix}'.")
     # Insert '_trimmed' before '_cam'
-    trimmed_base_name = base_name.replace(video_file_suffix, '_trimmed' + video_file_suffix)
+    trimmed_base_name = base_name.replace(video_file_suffix, '_trimmed' + run_num + video_file_suffix)
     # Construct the new filename with '_trimmed'
     new_file_name = f"{trimmed_base_name}{ext}"
     video_output_path = os.path.join(saving_dir, new_file_name)
@@ -167,15 +168,15 @@ def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension
 
                     if multiple_trims > 1:
                         for ij in range(multiple_trims):
-                            start_frame = on_array[ij] + 1
+                            start_frame = on_array[ij]
                             if recording_length > 0:
-                                stop_frame = start_frame + recording_length
+                                stop_frame = start_frame + (recording_length*60) + 1
                             else: 
                                 stop_frame = off_array[ij] + 1
 
-                            individualVid_trim(current_video_path, current_save_dir, file_extension, start_frame, stop_frame, file_suffix)
+                            individualVid_trim(current_video_path, current_save_dir, file_extension, start_frame, stop_frame, file_suffix, str(ij))
                     else:
-                        individualVid_trim(current_video_path, current_save_dir, file_extension, on_array, off_array, file_suffix)
+                        individualVid_trim(current_video_path, current_save_dir, file_extension, on_array, off_array, file_suffix, '')
 
                     if fileCount == len(video_naming_list):
                         # Escape the file extension for regex usage (in case there are special characters like '.' in it)
