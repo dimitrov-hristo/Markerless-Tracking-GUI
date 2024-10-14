@@ -28,14 +28,12 @@ class MyApp(tk.Tk):
         self.default_board_type = "Charuco"
         self.default_animal_calibration = "false"
         self.default_fisheye = "false"
-        self.default_file_extension = '.mp4'
+        self.default_file_extension = 'mp4'
         self.default_file_suffix = '-cam([A-Z])'
+        self.progress_tag = 'progress'
 
         # Define shared variables with default values
         self.save_directory = tk.StringVar(value=self.default_save_directory)
-        self.left_hand = tk.BooleanVar()
-        self.right_hand = tk.BooleanVar(value=True)
-        self.full_body = tk.BooleanVar()
 
         self.board_size = tk.StringVar(value=self.default_board_size)
         self.marker_length = tk.StringVar(value=self.default_marker_length)
@@ -55,12 +53,16 @@ class MyApp(tk.Tk):
         self.default_recLen_val = tk.StringVar(value="0")
         self.default_lightOn_val = tk.StringVar(value="220")
         self.video_ROI_location = {}
+        self.selected_bodyPart = tk.IntVar()
+
+        self.selected_bodyPart.set(2)
 
         self.processing_variables = {
             'leftHand': 0,
             'rightHand': 0,
             'fullBody': 0,
-            'calibration': 0
+            'calibration': 0,
+            'videoTrim': 0
         }
 
         # Thread management
@@ -69,21 +71,24 @@ class MyApp(tk.Tk):
             'threadLhand': None,
             'threadRhand': None,
             'threadBody': None,
-            'threadCalibration': None
+            'threadCalibration': None,
+            'threadVideoTrim': None
         }
 
         self.stop_events = {
             'threadLhand': threading.Event(),
             'threadRhand': threading.Event(),
             'threadBody': threading.Event(),
-            'threadCalibration': threading.Event()
+            'threadCalibration': threading.Event(),
+            'threadVideoTrim': threading.Event()
         }
 
         self.string_mapping = {
             'leftHand': "Left",
             'rightHand': "Right",
             'fullBody': "Full Body",
-            'calibration': "Calibration"
+            'calibration': "Calibration",
+            'videoTrim': "Video Trimming"
         }
         self.closeThread_on_demand = False
         self.interrupted_process = False
@@ -157,14 +162,16 @@ class MyApp(tk.Tk):
             'threadLhand': None,
             'threadRhand': None,
             'threadBody': None,
-            'threadCalibration': None
+            'threadCalibration': None,
+            'threadVideoTrim': None
         }
 
         self.stop_events = {
             'threadLhand': threading.Event(),
             'threadRhand': threading.Event(),
             'threadBody': threading.Event(),
-            'threadCalibration': threading.Event()
+            'threadCalibration': threading.Event(),
+            'threadVideoTrim': threading.Event()
         }
 
         if self.closeThread_on_demand:
@@ -195,9 +202,9 @@ class MyApp(tk.Tk):
         save_dir_button.pack(side=tk.RIGHT)
 
         # Checkboxes
-        tk.Checkbutton(self, text="Left Hand", variable=self.left_hand, command=self.enable_apply).pack(pady=5)
-        tk.Checkbutton(self, text="Right Hand", variable=self.right_hand, command=self.enable_apply).pack(pady=5)
-        tk.Checkbutton(self, text="Full Body", variable=self.full_body, command=self.enable_apply).pack(pady=5)
+        tk.Radiobutton(self, text="Left Hand", variable=self.selected_bodyPart, value = 1, command=self.enable_apply).pack(pady=5)
+        tk.Radiobutton(self, text="Right Hand", variable=self.selected_bodyPart, value = 2, command=self.enable_apply).pack(pady=5)
+        tk.Radiobutton(self, text="Full Body", variable=self.selected_bodyPart, value = 3, command=self.enable_apply).pack(pady=5)
 
         tk.Label(self, text="Video File Extension:").pack(pady=5)
         videoFile_extension_combobox = ttk.Combobox(self, textvariable=self.file_extension, values=['mp4', 'avi','mov', 'mpeg', 'flv', 'mkv'], 
@@ -347,10 +354,12 @@ class MyApp(tk.Tk):
             result = messagebox.askyesno("Apply Changes", "Do you want to apply the changes you have made?")
             if result:
                 self.apply_changes(menu)
-        if menu == "Main Page":
+        if menu == "Main Page" or menu == "Processing Page":
             self.main_menu()
-        elif menu == "Board Parameters Page":
+        elif menu == "Board Parameters Page" or menu == "Calibration Page":
             self.calibration_page()
+        elif menu == "AutoTrim Page":
+            self.videoTrim_window()
 
     def videoProcessing_page(self, mode):
         self.processing_operation = mode
@@ -429,6 +438,9 @@ class MyApp(tk.Tk):
 
         self.files_processed = 0
 
+        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Processing Page"), font=("Arial", 14))
+        back_button.place(x=10, y=10)
+
         tk.Label(self, text=f"Current Input Directory: {self.input_directory }").pack(pady=10)
         tk.Label(self, text=f"Current Computation: {self.processing_operation }").pack(pady=10)
 
@@ -444,11 +456,14 @@ class MyApp(tk.Tk):
         self.output_text = ScrolledText(self, height=20, width=80)
         self.output_text.pack(pady=10)
 
+        selected_variable = self.selected_bodyPart.get()
+
         self.processing_variables = {
-            'leftHand': self.left_hand.get(),
-            'rightHand': self.right_hand.get(),
-            'fullBody': self.full_body.get(),
-            'calibration': 0
+            'leftHand': selected_variable == 1,
+            'rightHand': selected_variable == 2,
+            'fullBody': selected_variable == 3,
+            'calibration': 0,
+            'videoTrim': 0
         }
 
         self.number_of_selected_bodyParts = sum(1 for value in self.processing_variables.values() if value == 1)
@@ -457,17 +472,45 @@ class MyApp(tk.Tk):
 
     def calibration_window(self):
         self.clear_window()
-        self.geometry("600x400")
-        self.output_text = ScrolledText(self, height=20, width=80)
-        self.output_text.pack(pady=10)
+        self.geometry("700x600")
+        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Calibration Page"), font=("Arial", 14))
+        back_button.place(x=10, y=10)
+
+        self.output_text = ScrolledText(self, height=40, width=80)
+        self.output_text.pack(padx=50, pady=10)
 
         self.processing_variables = {
             'leftHand': 0,
             'rightHand': 0,
             'fullBody': 0,
-            'calibration': 1
+            'calibration': 1,
+            'videoTrim': 0
         }
 
+        self.number_of_selected_bodyParts = sum(1 for value in self.processing_variables.values() if value == 1)
+        self.in_processing_window = True
+
+        self.start_threads()
+
+    def automaticTrim_window(self, multiTrim, recLen):
+        self.clear_window()
+        self.geometry("700x600")
+        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("AutoTrim Page"), font=("Arial", 14))
+        back_button.place(x=10, y=10)
+
+        self.output_text = ScrolledText(self, height=40, width=80)
+        self.output_text.pack(padx=50, pady=10)
+
+        self.processing_variables = {
+            'leftHand': 0,
+            'rightHand': 0,
+            'fullBody': 0,
+            'calibration': 0,
+            'videoTrim': 1
+        }
+
+        self.multi_trimming = multiTrim
+        self.recording_length = recLen
         self.number_of_selected_bodyParts = sum(1 for value in self.processing_variables.values() if value == 1)
         self.in_processing_window = True
 
@@ -503,6 +546,7 @@ class MyApp(tk.Tk):
         else:
             if report_string == "Finished":
                 # Processing complete
+                self.update_progress()
                 self.closeThread_on_demand = True
                 
             elif report_string[0].isdigit():
@@ -537,8 +581,39 @@ class MyApp(tk.Tk):
                         self.output_text.insert(tk.END, display_string)
 
                     self.output_text.see(tk.END)
-            elif "Video trimming" in report_string:
-                messagebox.showinfo("Video Trim Complete",  report_string)
+            elif "Video Trimming" in report_string:
+                if "completed" in report_string:
+                    self.closeThread_on_demand = True
+                else:
+                    #if "\n" in report_string:
+                    parts = report_string.split("Video Trimming Message:", 1)
+                    if len(parts) < 2:
+                        # If "Video Trimming Message:" is not found, use the whole string
+                        display_string = parts[0].strip()
+                    else:
+                        # Use the part after "Video Trimming Message:"
+                        display_string = parts[1].strip()
+
+                    # Detect if the message is a progress update using regex
+                    # Pattern looks for a number followed by '%' and '|', e.g., '0%|'
+                    progress_match = re.search(r'\d+%\|', display_string)
+
+                    if progress_match:
+                        ranges = self.output_text.tag_ranges(self.progress_tag)
+                        if ranges:
+                            # The tag_ranges method returns a tuple like (start1, end1, start2, end2, ...)
+                            # Iterate over them in pairs and delete each range
+                            for start, end in zip(ranges[0::2], ranges[1::2]):
+                                self.output_text.delete(start, end)
+                        
+                        # Insert the new progress update with the 'progress' tag
+                        self.output_text.insert(tk.END, display_string, self.progress_tag)
+                    else:
+                        # It's a non-progress message, append it and reset the progress index
+                        self.output_text.insert(tk.END, display_string + "\n")
+                        self.previous_progress_index = None
+
+                    self.output_text.see(tk.END)
             else:
                 messagebox.showinfo("Warning",  report_string)
                 self.closeThread_on_demand = True
@@ -551,9 +626,9 @@ class MyApp(tk.Tk):
 
         # Update progress label
         if self.num_processing_files > 1:
-            self.progress_label.config(text=f"Processing {self.processing_bodyPart}: Video {self.files_processed+1}/{self.num_processing_files} at location {self.fileName}")
+            self.progress_label.config(text=f"Processed {self.processing_bodyPart}: Video {self.files_processed}/{self.num_processing_files} at location {self.fileName}")
         else:
-            self.progress_label.config(text=f"Processing {self.processing_bodyPart}: Folder {self.files_processed+1}/{self.num_processing_files} at location {self.fileName}")
+            self.progress_label.config(text=f"Processed {self.processing_bodyPart}: Folder {self.files_processed}/{self.num_processing_files} at location {self.fileName}")
 
         # Calculate estimated time remaining
         if isinstance(self.elapsedTime, str) and self.num_processing_files > 1:
@@ -721,7 +796,8 @@ class MyApp(tk.Tk):
             ('leftHand', 'threadLhand'),
             ('rightHand', 'threadRhand'),
             ('fullBody', 'threadBody'),
-            ('calibration', 'threadCalibration')
+            ('calibration', 'threadCalibration'),
+            ('videoTrim', 'threadVideoTrim')
         ]
 
         # Manage threads based on conditions
@@ -732,6 +808,13 @@ class MyApp(tk.Tk):
                     if var_key == 'calibration':
                         command = 'anipose calibrate'
                         self.threads[thread_key] = threading.Thread(target=annotationFolders.execute_anaconda_command, args=(command,self.processing_communication))
+                        self.threads[thread_key].start()
+                        print(f"Thread for {self.string_mapping[var_key]} started.")
+                    elif var_key == 'videoTrim':
+                        print("start VidTrim")
+                        vidFile_suffix = self.file_suffix.get()
+
+                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.processing_communication))
                         self.threads[thread_key].start()
                         print(f"Thread for {self.string_mapping[var_key]} started.")
                     else:
@@ -779,7 +862,7 @@ class MyApp(tk.Tk):
                     self.interrupted_process = False
                 else:
                     messagebox.showinfo("Info",  "Processing is complete!")
-                self.main_menu()
+                #self.main_menu()
         else:
             # Continue checking periodically
             self.after(500, self.check_thread_status)  # Check every 500 ms
@@ -827,7 +910,7 @@ class MyApp(tk.Tk):
         self.clear_window()
 
         # Set a larger window size for the processing window
-        self.geometry("1500x900")
+        self.center_window(1400, 700)
 
         back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
         back_button.place(x=10, y=10)
@@ -885,7 +968,7 @@ class MyApp(tk.Tk):
         plot_button.grid(row=1, column=4, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         # Add matplotlib plot below buttons
-        self.fig = Figure(figsize=(5, 3), dpi=300)
+        self.fig = Figure(figsize=(7, 3.5), dpi=200)
         self.ax = self.fig.add_subplot(111)  # Create an axis for the plot
         frame_number = int(self.plot_entry.get())
         videoTrim_functions.plot_frame(video_path, frame_number, self.ax)
@@ -908,7 +991,7 @@ class MyApp(tk.Tk):
         self.clear_window()
 
         # Set a larger window size for the processing window
-        self.geometry("1500x900")
+        self.center_window(1400, 700)
         
         back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
         back_button.place(x=10, y=10)
@@ -926,13 +1009,13 @@ class MyApp(tk.Tk):
         plot_frame = tk.Frame(self)
         plot_frame.pack(pady=button_ypadding)
 
-        vidFile_suffix = self.file_suffix.get()
+        self.autoTrim_video_path = video_path
 
         # Disable buttons if configuration not applied 
         state = tk.NORMAL if self.video_ROI_location else tk.DISABLED
 
         # Add "Trim" button at the top
-        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.automatic_trim(video_path, self.save_directory.get(), int(self.multiTrim_entry.get()), self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], int(self.recLen_entry.get()), self.processing_communication),state=state)
+        trim_button = tk.Button(top_frame, text="Trim", command=lambda: self.automaticTrim_window(int(self.multiTrim_entry.get()),int(self.recLen_entry.get())),state=state)
         trim_button.pack()
 
         # Adjust appearance of the disabled Apply button
@@ -942,7 +1025,7 @@ class MyApp(tk.Tk):
             trim_button.config(state=tk.NORMAL, bg="lightblue", fg="black")
 
         # Add matplotlib plot below buttons
-        self.fig = Figure(figsize=(5, 3), dpi=300)
+        self.fig = Figure(figsize=(7, 3.5), dpi=200)
         self.ax = self.fig.add_subplot(111)  # Create an axis for the plot
         self.ax.axis('off')
         self.fig.tight_layout(pad=0.5)
@@ -1120,7 +1203,7 @@ pinky_2 = ["PINKY_PIP", "PINKY_DIP", "PINKY_TIP"]
 left_elbow_flexion = ["LEFT_SHOULDER", "LEFT_ELBOW", "LEFT_WRIST"]
 '''
 
-            if self.full_body.get():
+            if self.selected_bodyPart.get() == 3:
                 selected_scheme = body_scheme
                 selected_constraints = body_constraints
                 selected_angles = body_angles

@@ -43,9 +43,10 @@ scheme = [
 
 
 
+
 [triangulation]
 triangulate = true
-cam_regex = '-cam([A-Z])'
+cam_regex = '_cam([A-Z])'
 cam_align = "A"
 ransac = false
 optim = true
