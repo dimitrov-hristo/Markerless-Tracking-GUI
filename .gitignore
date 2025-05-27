@@ -1,0 +1,6 @@
+.DS_store
+*.txt
+.env
+*.bat
+D:/Markerless_Tracking_GUI_git/test_file_functions.py
+D:/Markerless_Tracking_GUI_git/__pycache__/

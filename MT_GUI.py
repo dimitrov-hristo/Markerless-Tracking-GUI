@@ -10,6 +10,7 @@ from tkinter.scrolledtext import ScrolledText
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import videoTrim_functions
+from count_videos import count_video_files_and_size
 
 class MyApp(tk.Tk):
     def __init__(self):
@@ -407,23 +408,31 @@ class MyApp(tk.Tk):
                                     existing_folders = False
             if existing_folders == False:
                 self.input_directory = os.path.normpath(selected_directory)
-                num_files, total_files_size_bytes, unique_recordings, videos_raw_folders = annotationFolders.count_video_files_and_size(self.input_directory, self.file_extension.get())
-                self.total_files_size_MB = round(total_files_size_bytes / (1024 ** 2),2)
-                if mode == "Annotate 2D":
-                    self.num_processing_files = int(num_files)
-                elif csv_files:
-                    unique_recordings = annotationFolders.count_unique_csv_files(self.input_directory)
-                    self.num_processing_files = int(unique_recordings)
+                num_files, total_files_size_bytes, unique_recordings, videos_raw_folders, error_string = count_video_files_and_size(self.input_directory, self.file_extension.get())
+                if error_string:
+                    messagebox.showinfo("Warning",error_string)
+                    self.lift() 
+
                 else:
-                    self.num_processing_files = int(videos_raw_folders)
-                                        
-                # Check if the conditions are met
-                if num_files > 30 or self.total_files_size_MB > 200:
-                    proceed = messagebox.askyesno("Warning", f"There are {num_files} files (total size {self.total_files_size_MB}MB), which can take awhile to process. Are you sure you want to proceed?")
-                    if proceed:
-                        self.processing_window()                        
-                else:
-                    self.processing_window()     
+                    self.total_files_size_MB = round(total_files_size_bytes / (1024 ** 2),2)
+                    if mode == "Annotate 2D":
+                        self.num_processing_files = int(num_files)
+                    elif csv_files:
+                        unique_recordings = annotationFolders.count_unique_csv_files(self.input_directory)
+                        self.num_processing_files = int(unique_recordings)
+                    else:
+                        self.num_processing_files = int(videos_raw_folders)
+                                            
+                    # Check if the conditions are met
+                    if num_files > 30 or self.total_files_size_MB > 200:
+                        proceed = messagebox.askyesno("Warning", f"There are {num_files} files (total size {self.total_files_size_MB}MB), which can take awhile to process. Are you sure you want to proceed?")
+                        if proceed:
+                            self.processing_window()  
+                    elif mode!="Annotate 2D" and videos_raw_folders==0:
+                        messagebox.showinfo("Warning","Exiting processing due to error in folder structure - videos-raw folder(s) missing. You must first run 2D Annotation!")
+                        self.lift()                      
+                    else:
+                        self.processing_window()     
 
     def processing_window(self):
         self.clear_window()
