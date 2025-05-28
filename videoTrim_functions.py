@@ -263,7 +263,7 @@ class RealTimeCapture:
 
     def process_output(self, message):
         # This method will be called in real-time
-        self.report_function(f"Video Trimming Message: {message}")  # Can send it somewhere or update a UI
+        self.report_function(f"Video Trimming Message: {message}")  # Update message for the GUI
 
     def get_output(self):
         with self.lock:

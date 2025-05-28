@@ -1,6 +1,6 @@
 .DS_store
 *.txt
+*.pyc
 .env
-*.bat
 test_file_functions.py
 __pycache__/

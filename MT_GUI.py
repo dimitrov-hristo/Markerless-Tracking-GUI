@@ -1109,29 +1109,39 @@ class MyApp(tk.Tk):
         batches = {}
         ROI_video_rootFolder = ''
         var = tk.BooleanVar(value=False)
+        cam_pattern = re.compile(r"cam[\w\d]+", re.IGNORECASE)
+        camera_ids = set()
+        recordings = []
+        labeled_video_folder_names = ['videos-labeled', 'videos-combined', 'videos-3d']
+        #loops through directories until it finds a folder containing video files with the required extension (e.g. mp4)
+        #then stores the camera_ids (later used to determine how many cameras each recording has based on unique IDs)
+        #as well as a list of video recordings names and the root folder where all these videos were
         for root, dirs, files in os.walk(input_path):
-            if any(file.endswith(self.file_extension.get()) for file in files):
-                for file in files:
-                    if file.endswith(self.file_extension.get()):
-                        ROI_video_rootFolder = root
-                        # Process the .mp4 file
-                        batch_name = file.split('cam')[0]
-                        # Add the file to the corresponding batch
-                        if batch_name not in batches:
-                            batches[batch_name] = []
-                        batches[batch_name].append(file)
+            if not any(name in root for name in labeled_video_folder_names):
+                if any(file.endswith(self.file_extension.get()) for file in files):
+                    for file in files:
+                        name_wo_ext = file.rsplit('.', 1)[0]
+                        cam_match = cam_pattern.search(name_wo_ext)
+                        if cam_match:
+                            camera_ids.add(cam_match.group())
+                            recordings.append((file, cam_match.group()))
+                        if file.endswith(self.file_extension.get()):
+                            ROI_video_rootFolder = root
+                    # Exit from all loops after processing the mp4 files
+                    break
+        num_cameras = len(camera_ids)
 
-                        
-                        #video_ROI_location[file] = {'x': x, 'y': y, 'width': width, 'height': height}
-                
-                # Exit from all loops after processing the mp4 files
-                break
-        first_batch = list(batches.keys())[0]
-        if first_batch:
-            for file in batches[first_batch]:
-                ROI_video_file = os.path.join(ROI_video_rootFolder, file)
+        #loops through previously retrieved videos recording names in chuncks of video files that are equal to the number of cameras.
+        #For example, if there are 3 cameras, then it will grab 3 recordings at a time, then strip their names, and for each of these
+        #it will extract the ROIs that are going to be used for the LED location for automatic trimming based on LED lights.
+        for i in range(0, len(recordings), num_cameras):
+            cameras_chunk = recordings[i:i + num_cameras]
+            selected_file_names = {base for base, _ in cameras_chunk}
+            for vidFile in selected_file_names:
+                ROI_video_file = os.path.join(ROI_video_rootFolder, vidFile)
                 print(f"Processing video file: {ROI_video_file}")
-                self.video_ROI_location[file] = videoTrim_functions.checkROI(ROI_video_file, 1, self.ax, self.canvas, var)
+                self.video_ROI_location[vidFile] = videoTrim_functions.checkROI(ROI_video_file, 1, self.ax, self.canvas, var)
+            break
 
         self.fig.clear()  # This clears the entire figure including all axes
         self.ax = self.fig.add_subplot(111)  # Add the axis back if needed
