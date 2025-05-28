@@ -5,6 +5,7 @@ import detectLED
 import os
 import sys
 import threading
+import shutil
 import time
 from moviepy.editor import VideoFileClip
 from matplotlib.widgets import RectangleSelector
@@ -155,79 +156,89 @@ def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension
         tempArray = []
         video_naming_list = list(ROIs.keys())
         fileCount=0
+        markerless_folder_names = ['videos-labeled', 'videos-combined', 'videos-3d', 'pose-3d', 'pose-2d', 'angles', 'calibration']
+
+        #Delete any empty folders at last levels of the input directory 
+        #as they can cause an issue for trimming
+        for root, dirs, files in os.walk(input_path):
+            if not dirs and not files:
+                print(f"Empty folder deleted at: {root}")
+                shutil.rmtree(root)
         # Iterate over files in the folder
         for root, dirs, files in os.walk(input_path):
 
             if not dirs and files:
-                sorted_video_files = sorted(files)
-            
-                relative_path = os.path.relpath(root, input_path)
-                current_save_dir = os.path.join(output_path, relative_path,'videos-raw')     
-                        
-                for file_name in sorted_video_files:
+                if not any(name in root for name in markerless_folder_names):
+                    sorted_video_files = sorted(files)
+                
+                    relative_path = os.path.relpath(root, input_path)
+                    current_save_dir = os.path.join(output_path, relative_path,'videos-raw')     
+                            
+                    for file_name in sorted_video_files:
 
-                    if file_name.endswith(file_extension):
-                        if not os.path.exists(current_save_dir):
-                            os.makedirs(current_save_dir)
+                        if file_name.endswith(file_extension):
+                            if not os.path.exists(current_save_dir):
+                                os.makedirs(current_save_dir)
 
-                        fileCount+=1
-                        current_video_path = os.path.join(root, file_name)
-                        vid_ROI_name = list(filter(lambda x: file_name[-8:-4] in x, ROIs))[0]
-                        vid_ROI = ROIs[vid_ROI_name]
-                        print(vid_ROI)
-                        on_array,off_array,total_frames = detectLED.detectLightChange(current_video_path, vid_ROI, recording_length, multiple_trims)
-                        tempArray.append(on_array)
+                            fileCount+=1
+                            current_video_path = os.path.join(root, file_name)
+                            vid_ROI_name = list(filter(lambda x: file_name[-8:-4] in x, ROIs))[0]
+                            vid_ROI = ROIs[vid_ROI_name]
+                            print(vid_ROI)
+                            on_array,off_array,total_frames = detectLED.detectLightChange(current_video_path, vid_ROI, recording_length, multiple_trims)
+                            tempArray.append(on_array)
 
-                        if multiple_trims > 1:
-                            for ij in range(multiple_trims):
-                                start_frame = on_array[ij]
-                                if recording_length > 0:
-                                    stop_frame = start_frame + (recording_length*60) + 1
-                                else: 
-                                    stop_frame = off_array[ij] + 1
+                            if multiple_trims > 1:
+                                for ij in range(multiple_trims):
+                                    start_frame = on_array[ij]
+                                    if recording_length > 0:
+                                        stop_frame = start_frame + (recording_length*60) + 1
+                                    else: 
+                                        stop_frame = off_array[ij] + 1
 
-                                individualVid_trim(current_video_path, current_save_dir, file_extension, start_frame, stop_frame, file_suffix, str(ij))
+                                    individualVid_trim(current_video_path, current_save_dir, file_extension, start_frame, stop_frame, file_suffix, str(ij))
+                            else:
+                                individualVid_trim(current_video_path, current_save_dir, file_extension, on_array, off_array, file_suffix, '')
+
+                            if fileCount == len(video_naming_list):
+                                # Escape the file extension for regex usage (in case there are special characters like '.' in it)
+                                escaped_extension = re.escape(file_extension)
+
+                                # Dictionary to hold the file names and their corresponding letter
+                                file_dict = {}
+
+                                # Extract the letter and file pair
+                                for file in files:
+                                    # Use the escaped extension in the regex
+                                    match = re.search(rf'{file_suffix}\.{escaped_extension}$', file)
+                                    if match:
+                                        letter = match.group(1)
+                                        file_dict[letter] = file
+
+                                # Sort the dictionary by the alphabetical order of the keys (letters)
+                                sorted_letters = sorted(file_dict.keys())
+
+                                # Initialize the variables dictionary and assign slices in sorted order
+                                video_files_dict = {letter: slice(idx) for idx, letter in enumerate(sorted_letters)}
+
+                                # Initialize flag variable
+                                flagged = False
+
+                                # Iterate over pairs of video_files_dict
+                                for var1, slice1 in video_files_dict.items():
+                                    for var2, slice2 in video_files_dict.items():
+                                        if var1 != var2:  # Exclude same variable combinations
+                                            diff = np.abs(tempArray[slice1.stop] - tempArray[slice2.stop])
+                                            if np.any(diff > 5):
+                                                potentialErrorList.append(os.path.join(root, 'cam' + var1 + '-' +' cam' + var2))
+                                                flagged = True
+                                                break
+                                    # if flagged:
+                                    #     break
+                                tempArray = []
+                                fileCount = 0
                         else:
-                            individualVid_trim(current_video_path, current_save_dir, file_extension, on_array, off_array, file_suffix, '')
-
-                        if fileCount == len(video_naming_list):
-                            # Escape the file extension for regex usage (in case there are special characters like '.' in it)
-                            escaped_extension = re.escape(file_extension)
-
-                            # Dictionary to hold the file names and their corresponding letter
-                            file_dict = {}
-
-                            # Extract the letter and file pair
-                            for file in files:
-                                # Use the escaped extension in the regex
-                                match = re.search(rf'{file_suffix}\.{escaped_extension}$', file)
-                                if match:
-                                    letter = match.group(1)
-                                    file_dict[letter] = file
-
-                            # Sort the dictionary by the alphabetical order of the keys (letters)
-                            sorted_letters = sorted(file_dict.keys())
-
-                            # Initialize the variables dictionary and assign slices in sorted order
-                            video_files_dict = {letter: slice(idx) for idx, letter in enumerate(sorted_letters)}
-
-                            # Initialize flag variable
-                            flagged = False
-
-                            # Iterate over pairs of video_files_dict
-                            for var1, slice1 in video_files_dict.items():
-                                for var2, slice2 in video_files_dict.items():
-                                    if var1 != var2:  # Exclude same variable combinations
-                                        diff = np.abs(tempArray[slice1.stop] - tempArray[slice2.stop])
-                                        if np.any(diff > 5):
-                                            potentialErrorList.append(os.path.join(root, 'cam' + var1 + '-' +' cam' + var2))
-                                            flagged = True
-                                            break
-                                # if flagged:
-                                #     break
-                            tempArray = []
-                            fileCount = 0
-                        
+                            print(f"No video files found at {input_path} with your selected extension: {file_extension}")
 
         if potentialErrorList:
             # Open a text file for writing
