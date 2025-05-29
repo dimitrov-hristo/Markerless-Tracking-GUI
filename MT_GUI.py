@@ -418,9 +418,6 @@ class MyApp(tk.Tk):
                         self.num_processing_files = int(num_files)
                     else:
                         self.num_processing_files = int(videos_raw_folders)
-                    print(self.num_processing_files) 
-                    print(videos_raw_folders)  
-                    print(unique_recordings)  
                     # Check if the conditions are met
                     if num_files > 30 or self.total_files_size_MB > 200:
                         proceed = messagebox.askyesno("Warning", f"There are {num_files} files (total size {self.total_files_size_MB}MB), which can take awhile to process. Are you sure you want to proceed?")
@@ -624,8 +621,13 @@ class MyApp(tk.Tk):
             else:
                 messagebox.showinfo("Warning",  report_string)
                 self.closeThread_on_demand = True
-                    
-                
+
+    #This is to ensure that the processing communication is called safely from other threads
+    #since tkinter is not thread-safe I pass this scheduling function instead of the actual 
+    #one I want to call               
+    def safe_gui_callback(self,message):
+        self.after(0, self.processing_communication, message)
+            
     def update_progress(self):
         # Update progress bar
         self.progress_bar['value'] = (self.files_processed / self.num_processing_files) * 100
@@ -814,14 +816,14 @@ class MyApp(tk.Tk):
                     self.current_thread_key = thread_key
                     if var_key == 'calibration':
                         command = 'anipose calibrate'
-                        self.threads[thread_key] = threading.Thread(target=annotationFolders.execute_anaconda_command, args=(command,self.processing_communication))
+                        self.threads[thread_key] = threading.Thread(target=annotationFolders.execute_anaconda_command, args=(command,self.safe_gui_callback))
                         self.threads[thread_key].start()
                         print(f"Thread for {self.string_mapping[var_key]} started.")
                     elif var_key == 'videoTrim':
                         print("start VidTrim")
                         vidFile_suffix = self.file_suffix.get()
 
-                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.processing_communication))
+                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.safe_gui_callback))
                         self.threads[thread_key].start()
                         print(f"Thread for {self.string_mapping[var_key]} started.")
                     else:
@@ -833,7 +835,7 @@ class MyApp(tk.Tk):
                             self.processing_bodyPart = direction + "_Hand"
 
                         self.startProcTime = time.perf_counter()
-                        self.threads[thread_key] = threading.Thread(target=annotationFolders.process_folders, args=(self.input_directory,self.save_directory.get(),direction, self.file_extension.get(),self.processing_communication,self.processing_operation,self.gui_directory,self.stop_events[thread_key]))
+                        self.threads[thread_key] = threading.Thread(target=annotationFolders.process_folders, args=(self.input_directory,self.save_directory.get(),direction, self.file_extension.get(),self.safe_gui_callback,self.processing_operation,self.gui_directory,self.stop_events[thread_key]))
                         self.threads[thread_key].start()
                         print(f"Thread for {direction} started.")
                 elif not self.threads[thread_key].is_alive():
