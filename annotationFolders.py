@@ -13,7 +13,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
         if not os.path.exists(path):
             os.makedirs(path)
     
-    def copy_mp4_files(src_folder, dest_folder, new_output_dir):
+    def copy_mp4_files(src_folder, dest_folder):
         mp4Files = 0
         for filename in os.listdir(src_folder):
             if filename.endswith(video_file_extension):
@@ -24,12 +24,20 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
                     time.sleep(0.5)
                     path = os.path.join(src_folder, filename)
                     run2D_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "run2D.py")
-                    execute_anaconda_command(f"conda run -n mediaPipeEnv python {run2D_dir} \"{path}\" \"{new_output_dir}\" \"{selected_bodypart}\"",report_callback)
+                    execute_anaconda_command(f"conda run -n mediaPipeEnv python {run2D_dir} \"{path}\" \"{dest_folder}\" \"{selected_bodypart}\"",report_callback)
         if mp4Files == 0:
             report_callback("2D Annotation, Input Videos")
 
     def process_mp4_folder(folder_path,contains_csv_files):
         
+        #Delete any empty folders before running anything to prevent
+        #bugs coming from a user creating an empty folder by accident
+        #at the last level
+        for root, dirs, files in os.walk(folder_path):
+            if not dirs and not files:
+                print(f"Empty folder deleted at: {root}")
+                shutil.rmtree(root)
+
         last_folder = os.path.basename(os.path.normpath(folder_path))
         parent_dir = os.path.dirname(folder_path)
         labeled_video_folder_names = ['videos-labeled', 'videos-combined', 'videos-3d']
@@ -94,11 +102,11 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
             elif mode == 'Label 2D':
                 print("Stop event at Label 2D")
                 print(stop_event.is_set())
-
-                report_callback(folder_path)
                 
                 command = 'cd ' +  os.path.dirname(parent_dir)
                 execute_anaconda_command(command,report_callback)
+
+                report_callback(folder_path)
 
                 command = 'anipose label-2d'
                 execute_anaconda_command(command,report_callback)
@@ -140,7 +148,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
 
             create_folder(new_dir)
             create_folder(videos_raw_folder)
-            copy_mp4_files(folder_path, videos_raw_folder, new_dir)
+            copy_mp4_files(folder_path, videos_raw_folder)
 
     def find_and_process_folders(base_dir):
 

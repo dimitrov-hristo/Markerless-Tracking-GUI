@@ -32,6 +32,6 @@ def count_unique_recordings(folder_path, video_file_extension):
                 chunk = recordings[i:i + num_cameras]
                 base_names = {base for base, _ in chunk}
                 if len(base_names) != 1:
-                    error_string = f"Inconsistent base names in recording set: {chunk}, at folder directory: {folder_path}. Rename the files to be matching for different cameras of the same recording."
+                    error_string = f"Inconsistent base names in recording set: {chunk}, at folder directory: {folder_path}. Rename the files to be matching."
 
     return recordings_count, error_string

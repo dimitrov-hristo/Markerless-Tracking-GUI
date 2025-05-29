@@ -380,13 +380,12 @@ class MyApp(tk.Tk):
             elif mode == "Label 3D":
                 deletion_folder_names = ["videos-3d", "videos-combined"]
             
+            #The if statements check if the directory contains only files - if it does, go to the level above and
+            #set it as the current selected directory. This is done to avoid confusions for further processing
+            if all(os.path.isfile(os.path.join(selected_directory, item)) for item in os.listdir(selected_directory)):
+                selected_directory = os.path.dirname(os.path.normpath(selected_directory))
             # Walk through the directory tree
             for dirpath, dirnames, filenames in os.walk(selected_directory):
-                # Check if the target folder is in the current directory's subdirectories
-                if all(os.path.isfile(os.path.join(selected_directory, item)) for item in os.listdir(selected_directory)):
-                    dirnames = os.listdir(os.path.dirname(os.path.normpath(dirpath))) 
-                    dirpath = os.path.dirname(os.path.normpath(dirpath))
-                    csv_files = True
                 for dirname in dirnames:
                     for folder_name in deletion_folder_names:
                         if dirname == folder_name:
@@ -417,12 +416,11 @@ class MyApp(tk.Tk):
                     self.total_files_size_MB = round(total_files_size_bytes / (1024 ** 2),2)
                     if mode == "Annotate 2D":
                         self.num_processing_files = int(num_files)
-                    elif csv_files:
-                        unique_recordings = annotationFolders.count_unique_csv_files(self.input_directory)
-                        self.num_processing_files = int(unique_recordings)
                     else:
                         self.num_processing_files = int(videos_raw_folders)
-                                            
+                    print(self.num_processing_files) 
+                    print(videos_raw_folders)  
+                    print(unique_recordings)  
                     # Check if the conditions are met
                     if num_files > 30 or self.total_files_size_MB > 200:
                         proceed = messagebox.askyesno("Warning", f"There are {num_files} files (total size {self.total_files_size_MB}MB), which can take awhile to process. Are you sure you want to proceed?")
