@@ -939,7 +939,7 @@ class MyApp(tk.Tk):
 
         vidFile_suffix = self.file_suffix.get()
         # Add "Trim" button at the top
-        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.individualVid_trim(video_path, self.save_directory.get(), self.file_extension.get(), int(self.start_entry.get()), int(self.stop_entry.get()),vidFile_suffix[0:4]))
+        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.individualVid_trim(video_path, self.save_directory.get(), self.file_extension.get(), int(self.start_entry.get()), int(self.stop_entry.get()),vidFile_suffix[0:4],''))
         trim_button.pack()
 
         # Add "Start Frame" label and input box
@@ -965,6 +965,7 @@ class MyApp(tk.Tk):
         prev_button = tk.Button(input_frame, text="⏮", command=lambda: self.plot_frame(-1, video_path))
         prev_button.grid(row=1, column=1, padx=button_xpadding, pady=button_ypadding, sticky="E")
 
+        self.default_plot_frame.set("0")  # or whatever your default frame index is
         self.plot_entry = tk.Entry(input_frame, width=10, textvariable=self.default_plot_frame)
         self.plot_entry.grid(row=1, column=2, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
@@ -1085,24 +1086,6 @@ class MyApp(tk.Tk):
         frame_number = int(self.plot_entry.get()) # Get the frame number from input
         videoTrim_functions.plot_frame(video_path, frame_number, self.ax)  # Pass self.ax to the external function
         self.canvas.draw()  # Update the canvas to reflect changes
-
-    def video_trimming(self,input_path,start_frame,stop_frame):
-        vid_name = os.path.basename(input_path)
-        base_name, ext = os.path.splitext(vid_name)
-        file_suffix = self.file_suffix.get()
-        if not ext == self.file_extension.get():
-            raise ValueError("The file does not have the video file extension selected at Configuration.")
-        # Find the position of '_cam[A-Z]'
-        if file_suffix[0:4] not in base_name:
-            raise ValueError(f"Filename does not contain '{file_suffix[0:4]}'.")
-        # Insert '_trimmed' before '_cam'
-        trimmed_base_name = base_name.replace(file_suffix[0:4], '_trimmed' + file_suffix[0:4])
-        # Construct the new filename with '_trimmed'
-        new_file_name = f"{trimmed_base_name}{ext}"
-        # Construct the new path in the output directory
-        video_output_path = os.path.join(self.save_directory.get(), new_file_name)
-
-        videoTrim_functions.trim_video_ffmpeg(input_path, video_output_path, start_frame, stop_frame)
 
     def ROI_selection(self,input_path):
         self.video_ROI_location = {}
