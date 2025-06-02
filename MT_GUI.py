@@ -11,6 +11,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import videoTrim_functions
 from count_videos import count_video_files_and_size
+from pathlib import Path
 
 class MyApp(tk.Tk):
     def __init__(self):
@@ -55,6 +56,7 @@ class MyApp(tk.Tk):
         self.default_lightOn_val = tk.StringVar(value="220")
         self.video_ROI_location = {}
         self.selected_bodyPart = tk.IntVar()
+        self.suppress_trace = False
 
         self.selected_bodyPart.set(2)
 
@@ -141,7 +143,7 @@ class MyApp(tk.Tk):
         label_3d_button = tk.Button(self, text="3D Video Labelling", command=lambda: self.videoProcessing_page("Label 3D"), state=state)
 
         hand_features_button = tk.Button(self, text="Hand Features", command=self.hand_features, state=state)
-        video_trimming_button = tk.Button(self, text="Video Trimming", command=self.videoTrim_window)
+        video_trimming_button = tk.Button(self, text="Video Trimming", command=self.videoTrim_window, state=state)
 
         exit_button = tk.Button(self, text="Exit", command=self.quit)
 
@@ -344,6 +346,8 @@ class MyApp(tk.Tk):
         self.enable_apply()
 
     def enable_apply(self, *args):
+        if self.suppress_trace:
+            return
         self.changes_made = True
         self.apply_button.config(state=tk.NORMAL, bg="lightblue", fg="black")
 
@@ -355,6 +359,12 @@ class MyApp(tk.Tk):
             result = messagebox.askyesno("Apply Changes", "Do you want to apply the changes you have made?")
             if result:
                 self.apply_changes(menu)
+            else:
+                self.suppress_trace = True
+                self.reset_board_parameters()
+                self.changes_made = False
+                self.suppress_trace = False
+                
         if menu == "Main Page" or menu == "Processing Page":
             self.main_menu()
         elif menu == "Board Parameters Page" or menu == "Calibration Page":
@@ -685,6 +695,7 @@ class MyApp(tk.Tk):
             print(f"Board Size = {self.board_size.get()}, Marker Length = {self.marker_length.get()}, Markers Number = {self.markers_dict_number.get()}, Board Type = {self.board_type.get()}")
         if menu == 'Config Page':
             self.change_body_annotation()
+            self.config_file_extension_overwrite()
         self.changes_made = False
         self.apply_button.config(state=tk.DISABLED)
         self.style_disabled_button(self.apply_button)
@@ -693,18 +704,22 @@ class MyApp(tk.Tk):
         self.configuration_applied = True
 
     def calibrate(self):
+        calibration_file_removal = True
         calibrationVid_directory = filedialog.askdirectory()
         if calibrationVid_directory:
-            calibration_folder_name = os.path.basename(os.path.normpath(calibrationVid_directory))
+            calibrationVid_directory = os.path.normpath(calibrationVid_directory)
+            calibration_folder_name = os.path.basename(calibrationVid_directory)
             # Check if the folder name is not 'calibration'
             if calibration_folder_name != 'calibration':
+                print('goes here only if the folder is not named calibration')
                 # Create the new folder path with 'calibration' as the name
-                new_calibration_folder_path = os.path.join(os.path.dirname(os.path.normpath(calibrationVid_directory)), 'calibration')            
+                new_calibration_folder_path = os.path.join(os.path.dirname(calibrationVid_directory), 'calibration')            
                 # Rename the folder
-                os.rename(os.path.normpath(calibrationVid_directory), new_calibration_folder_path)
+                os.rename(calibrationVid_directory, new_calibration_folder_path)
                 self.calibrationVid_directory = os.path.normpath(new_calibration_folder_path)
             else:
-                self.calibrationVid_directory = os.path.normpath(calibrationVid_directory)
+                self.calibrationVid_directory = calibrationVid_directory
+                print(f" This is the calibration_folder_name: {self.calibrationVid_directory}")
             
 
             contains_mp4 = any(file.endswith(self.file_extension.get()) for file in os.listdir(self.calibrationVid_directory) if os.path.isfile(os.path.join(self.calibrationVid_directory, file)))
@@ -715,13 +730,13 @@ class MyApp(tk.Tk):
                 if os.path.exists(source_file_path):
                     for file_name in calibration_file_names:
                         source_path = os.path.join(self.calibrationVid_directory, file_name)
-
                         destination_calibration_file = os.path.join(self.gui_directory, "calibration.toml")
                         # Remove a previous calibration file if it exists
-                        if os.path.exists(destination_calibration_file):
+                        if os.path.exists(destination_calibration_file) and calibration_file_removal:
                             os.remove(destination_calibration_file)
+                            calibration_file_removal = False
 
-                        shutil.copy(source_path, self.gui_directory)                    
+                        shutil.copy(source_path, self.gui_directory)     
                     messagebox.showinfo("Info",  f" No calibration needed. Folder: {self.calibrationVid_directory} Already contains calibration files. Files have now been moved to the default GUI Location")
                     self.main_menu()
                 else:
@@ -798,6 +813,7 @@ class MyApp(tk.Tk):
             file.write(config_content) 
 
         print(f"Updated config.toml saved at: {updated_config_path}")
+        self.enable_apply()
 
     def start_threads(self):
         # Define the thread starting order and corresponding strings
