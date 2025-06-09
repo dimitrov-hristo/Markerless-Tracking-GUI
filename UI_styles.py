@@ -80,27 +80,6 @@ class RoundedButton(tk.Frame):
 
     configure = config
 
-
-def apply_button_style(button):
-    button.config(
-        bg="#7fdbca",
-        fg="black",
-        activebackground="#6cd1bb",
-        activeforeground="black",
-        relief="flat",
-        bd=0,
-        highlightthickness=0,
-        padx=20,
-        pady=8,
-        font=("Segoe UI", 14, "bold"),
-        cursor="hand2"
-    )
-
-    button.update_idletasks()
-    width = button.winfo_reqwidth()
-    button.config(width=width)
-    button.pack(pady=10, ipadx=10, ipady=5)
-
 def create_themed_radiobutton(parent, text, variable, value, command=None, font=("Segoe UI", 14)):
     return tk.Radiobutton(
         parent,
