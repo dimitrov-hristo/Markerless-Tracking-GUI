@@ -28,6 +28,7 @@ def plot_frame(video_path, frame_number, gui_ax):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         gui_ax.clear()  # Clear previous plot
         gui_ax.set_title('Frame {}'.format(frame_number))
+        gui_ax.title.set_color('white')
         gui_ax.axis('off')
         gui_ax.imshow(frame_rgb)  # Plot the frame
 

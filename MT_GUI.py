@@ -12,6 +12,7 @@ from matplotlib.figure import Figure
 import videoTrim_functions
 from count_videos import count_video_files_and_size
 from pathlib import Path
+from UI_styles import RoundedButton, create_directory_selector, create_themed_radiobutton
 
 class MyApp(tk.Tk):
     def __init__(self):
@@ -33,6 +34,8 @@ class MyApp(tk.Tk):
         self.default_file_extension = 'mp4'
         self.default_file_suffix = '-cam([A-Z])'
         self.progress_tag = 'progress'
+        self.default_fontSize = 14
+        self.default_fontStyle = 'Segoe UI'
 
         # Define shared variables with default values
         self.save_directory = tk.StringVar(value=self.default_save_directory)
@@ -125,7 +128,14 @@ class MyApp(tk.Tk):
         self.clear_window()
 
         # Reset window size to default when showing the main menu
-        self.geometry("500x400")
+        self.configure(bg="#1e1e1e")
+        self.bg_color = "#1e1e1e"
+        self.fg_color = "white"
+        self.geometry("500x550")
+        self.title("Markerless Tracking GUI")
+
+        self.content = tk.Frame(self, bg=self.bg_color)
+        self.content.pack(expand=True)
         
         # Restore the default close behavior
         self.protocol("WM_DELETE_WINDOW", self.quit)
@@ -133,31 +143,39 @@ class MyApp(tk.Tk):
         # Disable buttons if configuration not applied
         state = tk.NORMAL if self.configuration_applied else tk.DISABLED
 
-        configure_button = tk.Button(self, text="Configure", command=self.configure_page)
-        calibrate_button = tk.Button(self, text="3D Calibration", command=self.calibration_page, state=state)
-        # Define the button with different labels
-        annotate_2d_button = tk.Button(self, text="2D Annotation", command=lambda: self.videoProcessing_page("Annotate 2D"), state=state)
-        annotate_3d_button = tk.Button(self, text="3D Annotation", command=lambda: self.videoProcessing_page("Annotate 3D"), state=state)
-
-        label_2d_button = tk.Button(self, text="2D Video Labelling", command=lambda: self.videoProcessing_page("Label 2D"), state=state)
-        label_3d_button = tk.Button(self, text="3D Video Labelling", command=lambda: self.videoProcessing_page("Label 3D"), state=state)
-
-        hand_features_button = tk.Button(self, text="Hand Features", command=self.hand_features, state=state)
-        video_trimming_button = tk.Button(self, text="Video Trimming", command=self.videoTrim_window, state=state)
-
-        exit_button = tk.Button(self, text="Exit", command=self.quit)
-
         button_ypadding = 15
 
-        configure_button.pack(pady=button_ypadding)
-        video_trimming_button.pack(pady=button_ypadding)
-        annotate_2d_button.pack(pady=button_ypadding)
-        calibrate_button.pack(pady=button_ypadding)
-        annotate_3d_button.pack(pady=button_ypadding)
-        label_2d_button.pack(pady=button_ypadding)
-        label_3d_button.pack(pady=button_ypadding)
-        hand_features_button.pack(pady=button_ypadding)
-        exit_button.pack(pady=button_ypadding)
+        button_specs = [
+            ("Configure", self.configure_page, tk.NORMAL),
+            ("Video Trimming", self.videoTrim_window, state),
+            ("Camera Calibration", self.calibration_page, state),
+            ("2D Annotation", lambda: self.videoProcessing_page("Annotate 2D"), state),
+            ("3D Annotation", lambda: self.videoProcessing_page("Annotate 3D"), state),
+            ("2D Video Labelling", lambda: self.videoProcessing_page("Label 2D"), state),
+            ("3D Video Labelling", lambda: self.videoProcessing_page("Label 3D"), state),
+            ("Exit", self.quit, tk.NORMAL)
+        ]
+
+        for label, cmd, state in button_specs:
+            bg_colour = "#FFDB58"
+            active_bg = "#E6C045"
+            if label=="Video Trimming":
+                bg_colour="#66A2D7" #E68DB3
+                active_bg = "#4E88BB"
+            elif label=="Camera Calibration":
+                bg_colour="#A77DBF" #A5C26C
+                active_bg = "#8E63A6"
+            elif label=="2D Annotation" or label=="3D Annotation":
+                bg_colour="#E68DB3" #66A2D7
+                active_bg = "#CC6F96"
+            elif label=="2D Video Labelling" or label=="3D Video Labelling":
+                bg_colour="#A5C26C" #A77DBF
+                active_bg = "#8CA75B"
+            elif label=="Exit":
+                bg_colour="#F0B562" #A77DBF
+                active_bg = "#D49A48"
+            btn = RoundedButton(self.content, text=label, command=cmd, state=state, bg=bg_colour, activebackground=active_bg)
+            btn.pack(pady=button_ypadding)  
 
         # Thread management
         self.current_thread_key = None
@@ -184,46 +202,48 @@ class MyApp(tk.Tk):
 
     def configure_page(self):
         self.clear_window()
+        self.geometry("600x600")
 
-        # Back button
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
-        back_button.place(x=10, y=10)
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
+        back_button.place(x=10, y=30)
 
-        # Offset for widgets to start lower and not block the back button
-        offset_frame = tk.Frame(self, height=50)
+        # Offset for spacing (e.g., to avoid overlapping the back button)
+        offset_frame = tk.Frame(self, height=70, bg="#1e1e1e")
         offset_frame.pack()
 
-        # Save Directory
-        save_dir_frame = tk.Frame(self)
-        save_dir_frame.pack(pady=5, fill=tk.X, padx=20)
-        
-        save_dir_entry = tk.Entry(save_dir_frame, textvariable=self.save_directory)
-        save_dir_entry.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        save_dir_entry.bind("<KeyRelease>", self.enable_apply)  # Detect changes in the entry
+        save_dir_frame = tk.Frame(self, bg="#1e1e1e")
+        save_dir_frame.pack(pady=20, fill=tk.X, padx=10)
 
-        save_dir_button = tk.Button(save_dir_frame, text="Browse\nSaving Directory", command=self.select_save_directory)
-        save_dir_button.pack(side=tk.RIGHT)
+        save_dir_entry, save_dir_button = create_directory_selector(save_dir_frame, self.save_directory, self.select_save_directory)
+        save_dir_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=6, pady=2)  # ipady controls internal height
+        save_dir_entry.bind("<KeyRelease>", self.enable_apply)
+
+        save_dir_button.pack(side=tk.RIGHT, padx=10)
 
         # Checkboxes
-        tk.Radiobutton(self, text="Left Hand", variable=self.selected_bodyPart, value = 1, command=self.enable_apply).pack(pady=5)
-        tk.Radiobutton(self, text="Right Hand", variable=self.selected_bodyPart, value = 2, command=self.enable_apply).pack(pady=5)
-        tk.Radiobutton(self, text="Full Body", variable=self.selected_bodyPart, value = 3, command=self.enable_apply).pack(pady=5)
+        #tk.Radiobutton(self, text="Left Hand", variable=self.selected_bodyPart, value = 1, command=self.enable_apply).pack(pady=5)
+        lh_radio_buttons = create_themed_radiobutton(self, "Left Hand", self.selected_bodyPart, 1, self.enable_apply)
+        lh_radio_buttons.pack(pady=5)
+        lh_radio_buttons = create_themed_radiobutton(self, "Right Hand", self.selected_bodyPart, 2, self.enable_apply)
+        lh_radio_buttons.pack(pady=5)
+        lh_radio_buttons = create_themed_radiobutton(self, "Full Body", self.selected_bodyPart, 3, self.enable_apply)
+        lh_radio_buttons.pack(pady=5)
 
-        tk.Label(self, text="Video File Extension:").pack(pady=5)
+        tk.Label(self, text="Video File Extension:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         videoFile_extension_combobox = ttk.Combobox(self, textvariable=self.file_extension, values=['mp4', 'avi','mov', 'mpeg', 'flv', 'mkv'], 
-                                           state="readonly")
+                                           state="readonly", font=(self.default_fontStyle, self.default_fontSize))
         videoFile_extension_combobox.pack(pady=5)
 
-        tk.Label(self, text="Video File Naming Suffix:").pack(pady=5)
+        tk.Label(self, text="Video File Naming Suffix:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         videoFile_suffix_combobox = ttk.Combobox(self, textvariable=self.file_suffix, values=['-cam([A-Z])', '_cam([A-Z])', '-cam([1-9])', '_cam([1-9])', '-cam([a-z])', '_cam([a-z])'], 
-                                           state="readonly")
+                                           state="readonly", font=(self.default_fontStyle, self.default_fontSize))
         videoFile_suffix_combobox.pack(pady=5)
 
         self.file_extension.trace_add("write", self.config_file_extension_overwrite)
         self.file_suffix.trace_add("write", self.config_file_extension_overwrite)
 
         # Apply button
-        apply_button = tk.Button(self, text="Apply", state=tk.DISABLED, command=lambda: self.apply_changes("Config Page"))
+        apply_button = RoundedButton(self, text="Apply", state=tk.DISABLED, command=lambda: self.apply_changes("Config Page"))
         apply_button.pack(side=tk.BOTTOM, pady=10)
 
         # Adjust appearance of the disabled Apply button
@@ -239,13 +259,13 @@ class MyApp(tk.Tk):
 
         self.center_window(500, 400)
 
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
         back_button.place(x=10, y=10)
 
-        tk.Button(self, text="Change Board Parameters", command=self.board_parameters_page).pack(pady=5)
-        tk.Button(self, text="Calibrate", command=self.calibrate).pack(pady=5)
+        RoundedButton(self, text="Change Board Parameters", command=self.board_parameters_page).pack(pady=5)
+        RoundedButton(self, text="Calibrate", command=self.calibrate).pack(pady=5)
 
-        apply_button = tk.Button(self, text="Apply", state=tk.DISABLED, command=lambda: self.apply_changes("Calibration Page"))
+        apply_button = RoundedButton(self, text="Apply", state=tk.DISABLED, command=lambda: self.apply_changes("Calibration Page"))
         apply_button.pack(side=tk.BOTTOM, pady=10)
 
         # Adjust appearance of the disabled Apply button
@@ -259,46 +279,46 @@ class MyApp(tk.Tk):
         # Set a larger window size for the board parameters page
         self.center_window(500, 800)
 
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Board Parameters Page"), font=("Arial", 14))
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("Board Parameters Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
         back_button.place(x=10, y=10)
 
-        tk.Label(self, text="Board Size:").pack(pady=5)
+        tk.Label(self, text="Board Size:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         board_size_entry = tk.Entry(self, textvariable=self.board_size)
         board_size_entry.pack(pady=5)
 
-        tk.Label(self, text="Marker Length:").pack(pady=5)
+        tk.Label(self, text="Marker Length:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         marker_length_entry = tk.Entry(self, textvariable=self.marker_length)
         marker_length_entry.pack(pady=5)
 
-        tk.Label(self, text="Number of Bits in the Markers:").pack(pady=5)
+        tk.Label(self, text="Number of Bits in the Markers:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         markers_bits_number_entry = tk.Entry(self, textvariable=self.markers_bits_number)
         markers_bits_number_entry.pack(pady=5)
 
-        tk.Label(self, text="Number of Markers in the Dictionary:").pack(pady=5)
+        tk.Label(self, text="Number of Markers in the Dictionary:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         markers_dict_number_entry = tk.Entry(self, textvariable=self.markers_dict_number)
         markers_dict_number_entry.pack(pady=5)
 
-        tk.Label(self, text="Square Side Length (Charuco/CheckerBoard):").pack(pady=5)
+        tk.Label(self, text="Square Side Length (Charuco/CheckerBoard):", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         board_square_side_length_entry = tk.Entry(self, textvariable=self.board_square_side_length)
         board_square_side_length_entry.pack(pady=5)
 
-        tk.Label(self, text="Board Type:").pack(pady=5)
+        tk.Label(self, text="Board Type:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         board_type_combobox = ttk.Combobox(self, textvariable=self.board_type, values=["Charuco", "Aruco", "Checkerboard"], 
-                                           state="readonly")
+                                           state="readonly", font=(self.default_fontStyle, self.default_fontSize))
         board_type_combobox.pack(pady=5)
 
-        tk.Label(self, text="Animal Calibration:").pack(pady=5)
+        tk.Label(self, text="Animal Calibration:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         animal_calibration_combobox = ttk.Combobox(self, textvariable=self.animal_calibration, values=["True", "False"], 
-                                           state="readonly")
+                                           state="readonly", font=(self.default_fontStyle, self.default_fontSize))
         animal_calibration_combobox.pack(pady=5)
 
-        tk.Label(self, text="Fisheye Lense:").pack(pady=5)
+        tk.Label(self, text="Fisheye Lense:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=5)
         fisheye_combobox = ttk.Combobox(self, textvariable=self.fisheye, values=["True", "False"], 
-                                           state="readonly")
+                                           state="readonly", font=(self.default_fontStyle, self.default_fontSize))
         fisheye_combobox.pack(pady=5)
 
         # Change back to default button
-        reset_button = tk.Button(self, text="Reset to Default", command=self.reset_board_parameters)
+        reset_button = RoundedButton(self, text="Reset to Default", command=self.reset_board_parameters)
         reset_button.pack(pady=10)
 
         # Trace changes in the board parameters
@@ -311,7 +331,7 @@ class MyApp(tk.Tk):
         self.animal_calibration.trace_add("write", self.enable_apply)
         self.fisheye.trace_add("write", self.enable_apply)
 
-        apply_button = tk.Button(self, text="Apply", state=tk.DISABLED, command=lambda: self.apply_changes("Board Parameters Page"))
+        apply_button = RoundedButton(self, text="Apply", state=tk.DISABLED, command=lambda: self.apply_changes("Board Parameters Page"))
         apply_button.pack(side=tk.BOTTOM, pady=10)
 
         # Adjust appearance of the disabled Apply button
@@ -443,7 +463,7 @@ class MyApp(tk.Tk):
         self.clear_window()
 
         # Set a larger window size for the processing window
-        self.geometry("1000x800")
+        self.geometry("1000x900")
 
         self.protocol("WM_DELETE_WINDOW", self.on_processing_window_close)
 
@@ -452,22 +472,22 @@ class MyApp(tk.Tk):
 
         self.files_processed = 0
 
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Processing Page"), font=("Arial", 14))
-        back_button.place(x=10, y=10)
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("Processing Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
+        back_button.place(x=10, y=40)
 
-        tk.Label(self, text=f"Current Input Directory: {self.input_directory }").pack(pady=10)
-        tk.Label(self, text=f"Current Computation: {self.processing_operation }").pack(pady=10)
+        tk.Label(self, text=f"Current Input Directory: {self.input_directory }", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=10)
+        tk.Label(self, text=f"Current Computation: {self.processing_operation }", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).pack(pady=10)
 
         self.progress_bar = ttk.Progressbar(self, length=400, mode='determinate')
         self.progress_bar.pack(pady=20)
 
-        self.progress_label = tk.Label(self, text="Processing: Video 0/0")
+        self.progress_label = tk.Label(self, text="Processing: Video 0/0", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         self.progress_label.pack(pady=5)
 
-        self.estimated_time_label = tk.Label(self, text="Estimated remaining time: Computing...")
+        self.estimated_time_label = tk.Label(self, text="Estimated remaining time: Computing...", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         self.estimated_time_label.pack(pady=5)
 
-        self.output_text = ScrolledText(self, height=20, width=80)
+        self.output_text = ScrolledText(self, height=40, width=80, bg="#3f3f3f", fg="#ffdb58")
         self.output_text.pack(pady=10)
 
         selected_variable = self.selected_bodyPart.get()
@@ -486,12 +506,14 @@ class MyApp(tk.Tk):
 
     def calibration_window(self):
         self.clear_window()
-        self.geometry("700x600")
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Calibration Page"), font=("Arial", 14))
-        back_button.place(x=10, y=10)
+        self.geometry("840x700")
+        tk.Label(self, text="Processing Messages:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).place(x=325, y=40)
 
-        self.output_text = ScrolledText(self, height=40, width=80)
-        self.output_text.pack(padx=50, pady=10)
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("Calibration Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
+        back_button.place(x=10, y=80)
+
+        self.output_text = ScrolledText(self, height=40, width=80, bg="#3f3f3f", fg="#ffdb58")
+        self.output_text.pack(padx=50, pady=80)
 
         self.processing_variables = {
             'leftHand': 0,
@@ -508,12 +530,14 @@ class MyApp(tk.Tk):
 
     def automaticTrim_window(self, multiTrim, recLen):
         self.clear_window()
-        self.geometry("700x600")
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("AutoTrim Page"), font=("Arial", 14))
-        back_button.place(x=10, y=10)
+        self.geometry("840x700")
+        tk.Label(self, text="Processing Messages:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).place(x=325, y=40)
 
-        self.output_text = ScrolledText(self, height=40, width=80)
-        self.output_text.pack(padx=50, pady=10)
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("AutoTrim Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
+        back_button.place(x=10, y=80)
+
+        self.output_text = ScrolledText(self, height=40, width=80, bg="#3f3f3f", fg="#ffdb58")
+        self.output_text.pack(padx=50, pady=80)
 
         self.processing_variables = {
             'leftHand': 0,
@@ -750,7 +774,7 @@ class MyApp(tk.Tk):
 
                     self.calibration_window()
             else:
-                print(f"Calibration Video Directory: {self.calibrationVid_directory} Does Not Contain Any Videos With The Selected Video File Extension From Configuration")
+                messagebox.showinfo("Info", f"Calibration Video Directory: {self.calibrationVid_directory} Does Not Contain Any Videos With The Selected Video File Extension From Configuration")
 
     def board_parameters_overwrite(self):
         # Path to the original config.toml file
@@ -899,16 +923,16 @@ class MyApp(tk.Tk):
         # Set a larger window size for the processing window
         self.geometry("600x400")
         button_ypadding = 10
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
         back_button.place(x=10, y=10)
 
-        manual_trim_button = tk.Button(self, text="Manual", command=lambda: self.videoTrimming_page("Manual Trimming"))
+        manual_trim_button = RoundedButton(self, text="Manual", command=lambda: self.videoTrimming_page("Manual Trimming"))
         manual_trim_button.pack(pady=button_ypadding)
 
-        automatic_trim_button = tk.Button(self, text="Automatic\n(Lights)", command=lambda: self.videoTrimming_page("Automatic Trimming"))
+        automatic_trim_button = RoundedButton(self, text="Automatic\n(Lights)", command=lambda: self.videoTrimming_page("Automatic Trimming"))
         automatic_trim_button.pack(pady=button_ypadding)
 
-        video_vis_button = tk.Button(self, text="Video\nVisualisation", command=lambda: self.videoTrimming_page("Video Visualisation"))
+        video_vis_button = RoundedButton(self, text="Video\nVisualisation", command=lambda: self.videoTrimming_page("Video Visualisation"))
         video_vis_button.pack(pady=button_ypadding)
 
     def videoTrimming_page(self, video_operation):
@@ -935,67 +959,73 @@ class MyApp(tk.Tk):
         self.clear_window()
 
         # Set a larger window size for the processing window
-        self.center_window(1400, 700)
+        self.center_window(1400, 720)
 
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
         back_button.place(x=10, y=10)
         
         button_ypadding = 10
-        button_xpadding = 0
+        button_xpadding = 15
 
         # Define the layout frames
-        top_frame = tk.Frame(self)
+        top_frame = tk.Frame(self, bg="#1e1e1e")
         top_frame.pack(pady=button_ypadding)
 
-        input_frame = tk.Frame(self)
+        input_frame = tk.Frame(self, bg="#1e1e1e")
         input_frame.pack(pady=5)
 
-        plot_frame = tk.Frame(self)
+        plot_frame = tk.Frame(self, bg="#1e1e1e")
         plot_frame.pack(pady=button_ypadding)
 
         vidFile_suffix = self.file_suffix.get()
         # Add "Trim" button at the top
-        trim_button = tk.Button(top_frame, text="Trim", command=lambda: videoTrim_functions.individualVid_trim(video_path, self.save_directory.get(), self.file_extension.get(), int(self.start_entry.get()), int(self.stop_entry.get()),vidFile_suffix[0:4],''))
+        trim_button = RoundedButton(top_frame, text="Trim", command=lambda: videoTrim_functions.individualVid_trim(video_path, self.save_directory.get(), self.file_extension.get(), int(self.start_entry.get()), int(self.stop_entry.get()),vidFile_suffix[0:4],''))
         trim_button.pack()
 
         # Add "Start Frame" label and input box
-        start_label = tk.Label(input_frame, text="Start Frame:")
+        start_label = tk.Label(input_frame, text="Start Frame:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         start_label.grid(row=0, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
-        self.start_entry = tk.Entry(input_frame, width=10, textvariable=self.default_start_frame)
+        self.start_entry = tk.Entry(input_frame, width=10, textvariable=self.default_start_frame, font=(self.default_fontStyle, self.default_fontSize))
         self.start_entry.grid(row=0, column=1, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         # Add "Stop Frame" label and input box
-        stop_label = tk.Label(input_frame, text="Stop Frame:")
+        stop_label = tk.Label(input_frame, text="Stop Frame:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         stop_label.grid(row=0, column=2, padx=button_xpadding, pady=button_ypadding, sticky="E")
-        self.stop_entry = tk.Entry(input_frame, width=10, textvariable=self.default_stop_frame)
+        self.stop_entry = tk.Entry(input_frame, width=10, textvariable=self.default_stop_frame, font=(self.default_fontStyle, self.default_fontSize))
         self.stop_entry.grid(row=0, column=3, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
-        empty_label = tk.Label(input_frame, text="")
+        empty_label = tk.Label(input_frame, text="", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         empty_label.grid(row=0, column=4, padx=button_xpadding, pady=button_ypadding)       
 
         # Add "Plot Frame" label and input box
-        plot_label = tk.Label(input_frame, text="Plot Frame:")
+        plot_label = tk.Label(input_frame, text="Plot Frame:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         plot_label.grid(row=1, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         # Add "Next" button with song symbol (right arrow)
-        prev_button = tk.Button(input_frame, text="⏮", command=lambda: self.plot_frame(-1, video_path))
+        prev_button = RoundedButton(input_frame, text="⏮", command=lambda: self.plot_frame(-1, video_path))
         prev_button.grid(row=1, column=1, padx=button_xpadding, pady=button_ypadding, sticky="E")
 
         self.default_plot_frame.set("0")  # or whatever your default frame index is
-        self.plot_entry = tk.Entry(input_frame, width=10, textvariable=self.default_plot_frame)
+        self.plot_entry = tk.Entry(input_frame, width=10, textvariable=self.default_plot_frame, font=(self.default_fontStyle, self.default_fontSize))
         self.plot_entry.grid(row=1, column=2, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         # Add "Next" button with song symbol (right arrow)
-        next_button = tk.Button(input_frame, text="⏭", command=lambda: self.plot_frame(1, video_path))
+        next_button = RoundedButton(input_frame, text="⏭", command=lambda: self.plot_frame(1, video_path))
         next_button.grid(row=1, column=3, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         # Add "Plot" button that calls external function
-        plot_button = tk.Button(input_frame, text="Plot", command=lambda: self.plot_frame(0, video_path))
+        plot_button = RoundedButton(input_frame, text="Plot", command=lambda: self.plot_frame(0, video_path))
         plot_button.grid(row=1, column=4, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         # Add matplotlib plot below buttons
         self.fig = Figure(figsize=(7, 3.5), dpi=200)
+        self.fig.patch.set_facecolor('#1e1e1e')
         self.ax = self.fig.add_subplot(111)  # Create an axis for the plot
+        self.ax.set_facecolor('#1e1e1e') 
+        self.ax.tick_params(colors='white')
+        self.ax.xaxis.label.set_color('white')
+        self.ax.yaxis.label.set_color('white')
+
         frame_number = int(self.plot_entry.get())
         videoTrim_functions.plot_frame(video_path, frame_number, self.ax)
         self.fig.tight_layout(pad=0.5)
@@ -1017,22 +1047,22 @@ class MyApp(tk.Tk):
         self.clear_window()
 
         # Set a larger window size for the processing window
-        self.center_window(1400, 700)
+        self.center_window(1400, 720)
         
-        back_button = tk.Button(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=("Arial", 14))
+        back_button = RoundedButton(self, text="←", command=lambda: self.check_apply_before_back("Main Page"), font=(self.default_fontStyle, self.default_fontSize, "bold"))
         back_button.place(x=10, y=10)
         
         button_ypadding = 10
-        button_xpadding = 10
+        button_xpadding = 15
         textbox_width = 6
 
-        top_frame = tk.Frame(self)
+        top_frame = tk.Frame(self, bg="#1e1e1e")
         top_frame.pack(pady=button_ypadding)
 
-        input_frame = tk.Frame(self)
+        input_frame = tk.Frame(self, bg="#1e1e1e")
         input_frame.pack(pady=5)
 
-        plot_frame = tk.Frame(self)
+        plot_frame = tk.Frame(self, bg="#1e1e1e")
         plot_frame.pack(pady=button_ypadding)
 
         self.autoTrim_video_path = video_path
@@ -1041,7 +1071,7 @@ class MyApp(tk.Tk):
         state = tk.NORMAL if self.video_ROI_location else tk.DISABLED
 
         # Add "Trim" button at the top
-        trim_button = tk.Button(top_frame, text="Trim", command=lambda: self.automaticTrim_window(int(self.multiTrim_entry.get()),int(self.recLen_entry.get())),state=state)
+        trim_button = RoundedButton(top_frame, text="Trim", command=lambda: self.automaticTrim_window(int(self.multiTrim_entry.get()),int(self.recLen_entry.get())),state=state)
         trim_button.pack()
 
         # Adjust appearance of the disabled Apply button
@@ -1052,29 +1082,34 @@ class MyApp(tk.Tk):
 
         # Add matplotlib plot below buttons
         self.fig = Figure(figsize=(7, 3.5), dpi=200)
+        self.fig.patch.set_facecolor('#1e1e1e')
         self.ax = self.fig.add_subplot(111)  # Create an axis for the plot
+        self.ax.set_facecolor('#1e1e1e') 
+        self.ax.tick_params(colors='white')
+        self.ax.xaxis.label.set_color('white')
+        self.ax.yaxis.label.set_color('white')
         self.ax.axis('off')
         self.fig.tight_layout(pad=0.5)
 
         # Add "Start Frame" label and input box
-        multiTrim_label = tk.Label(input_frame, text="Multiple trims within a video:")
+        multiTrim_label = tk.Label(input_frame, text="Multiple trims within a video:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         multiTrim_label.grid(row=0, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
-        self.multiTrim_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_multiTrim_val)
+        self.multiTrim_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_multiTrim_val, font=(self.default_fontStyle, self.default_fontSize))
         self.multiTrim_entry.grid(row=0, column=1, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         # Add "Stop Frame" label and input box
-        recLen_label = tk.Label(input_frame, text="OPTIONAL\nRecording Length (s):")
+        recLen_label = tk.Label(input_frame, text="OPTIONAL\nRecording Length (s):", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         recLen_label.grid(row=0, column=2, padx=button_xpadding, pady=button_ypadding, sticky="E")
-        self.recLen_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_recLen_val)
+        self.recLen_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_recLen_val, font=(self.default_fontStyle, self.default_fontSize))
         self.recLen_entry.grid(row=0, column=3, padx=button_xpadding, pady=button_ypadding, sticky="W")    
 
         # Add "Plot Frame" label and input box
-        lightOn_label = tk.Label(input_frame, text="Light On Threshold (0-255):")
+        lightOn_label = tk.Label(input_frame, text="Light On Threshold (0-255):", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         lightOn_label.grid(row=1, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
-        self.lightOn_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_lightOn_val)
+        self.lightOn_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_lightOn_val, font=(self.default_fontStyle, self.default_fontSize))
         self.lightOn_entry.grid(row=1, column=1, padx=button_xpadding, pady=button_ypadding, sticky="W")   
 
-        ROI_button = tk.Button(input_frame, text="Select ROI", command=lambda: self.ROI_selection(video_path))
+        ROI_button = RoundedButton(input_frame, text="Select ROI", command=lambda: self.ROI_selection(video_path))
         ROI_button.grid(row=1, column=2, columnspan=2, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
