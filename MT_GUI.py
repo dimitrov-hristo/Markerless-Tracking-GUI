@@ -1143,7 +1143,12 @@ class MyApp(tk.Tk):
         batches = {}
         ROI_video_rootFolder = ''
         var = tk.BooleanVar(value=False)
-        cam_pattern = re.compile(r"cam[\w\d]+", re.IGNORECASE)
+        # Escape dot in the extension
+        escaped_extension = re.escape(self.file_extension.get())
+
+        # Build full regex pattern
+        pattern_str = rf"{self.file_suffix.get()}\.{escaped_extension}$"
+        cam_pattern = re.compile(pattern_str, re.IGNORECASE)
         camera_ids = set()
         recordings = []
         labeled_video_folder_names = ['videos-labeled', 'videos-combined', 'videos-3d']
@@ -1154,8 +1159,7 @@ class MyApp(tk.Tk):
             if not any(name in root for name in labeled_video_folder_names):
                 if any(file.endswith(self.file_extension.get()) for file in files):
                     for file in files:
-                        name_wo_ext = file.rsplit('.', 1)[0]
-                        cam_match = cam_pattern.search(name_wo_ext)
+                        cam_match = cam_pattern.search(file)
                         if cam_match:
                             camera_ids.add(cam_match.group())
                             recordings.append((file, cam_match.group()))
