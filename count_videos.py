@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import os
 from count_unique_recordings import count_unique_recordings
 

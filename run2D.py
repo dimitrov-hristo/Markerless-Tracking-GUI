@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import numpy as np
 import cv2 as cv
 import pickle
@@ -32,7 +33,6 @@ def annotate_2D(mp_hands, bodyparts, path, cap, points, selected_bodypart, outpu
                         hand = results.multi_hand_landmarks[0]
                     
                         if(results.multi_handedness[0].classification[0].label == selected_bodypart):
-                            #print("Right - 1")
                             for lm in mp_hands.HandLandmark:
                                 points[frame_num][lm.value][0] = image_width - hand.landmark[lm.value].x * image_width
                                 points[frame_num][lm.value][1] = hand.landmark[lm.value].y * image_height
@@ -125,16 +125,10 @@ def mark_holistic_video(mp_holistic, bodyparts, path, cap, points, output_dir):
             
         cap.release()
         
-        #print(points)
-        
         orderofbpincsv = bodyparts
         n_frames, n_joints, c = points.shape # c = 3, stands for x,y,likelihood
-        
-        #print(c)
 
         data = points.reshape(n_frames, n_joints * c) # data reshaped so that rows = frames, cols = joints*c
-        
-        #print(data)
 
         frameindex = list([i for i in range(n_frames)]) # nr. of frames
 
@@ -175,7 +169,6 @@ def run_mediapipe2D(videos_root_path, output_dir, selected_bodypart):
     else:
         print(videos_root_path)
         n_frames = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
-        #points = np.empty((n_frames, len(bodyparts), 2))
         if (n_frames>0):
             points = np.empty((n_frames, len(bodyparts), 3))
             if 'Full Body' in selected_bodypart:

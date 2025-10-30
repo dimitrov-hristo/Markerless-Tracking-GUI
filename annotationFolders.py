@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import os
 import shutil
 import subprocess
@@ -46,9 +47,6 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
 
             if mode == "Annotate 2D":
                 # Create the "2d-pose" folder next to "videos-raw"
-                print("Stop event at Annotate 2D")
-                print(stop_event.is_set())
-                #create_folder(target_folder)
                 for filename in os.listdir(folder_path):
                     if filename.endswith(video_file_extension):
                         report_callback(folder_path)
@@ -59,12 +57,8 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
                     else:
                         report_callback("2D Annotation, Input Videos")
                         time.sleep(3)
-                        print("Stop event at Annotate 2D error end")
-                        print(stop_event.is_set())
 
             elif mode == 'Annotate 3D':
-                print("Stop event at Annotate 3D")
-                print(stop_event.is_set())
                 
                 calibration_file_path = os.path.join(config_dir, "calibration.toml")
                 if calibration_file_path:
@@ -179,8 +173,6 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
                     break
                 process_mp4_folder(root,False)
 
-        print("Stop Event at Process Folders Finished")
-        print(stop_event.is_set())
         if processed_files_number == 0:
             report_callback(f"Processing folder path '{os.path.dirname(base_dir)}': no video files found inside the folder directory")
             time.sleep(5)

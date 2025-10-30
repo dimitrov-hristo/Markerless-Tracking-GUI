@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import cv2
 import re
 import numpy as np
@@ -9,12 +10,6 @@ import shutil
 import time
 from moviepy.editor import VideoFileClip
 from matplotlib.widgets import RectangleSelector
-
-#video_path = '/Volumes/Plasticity/Projects/hristo_grasping/Behavioural_data/CT_005/Object_10/Towards/2024-03-12-12-14-01-camD.mp4'
-#loaded_array = np.load('/Volumes/Plasticity/Projects/hristo_grasping/Behavioural_data/CT_005/Object_10/Towards/off_array_camD.npy')
-
-#on_frames = loaded_array[0:5] 
-
 
 def plot_frame(video_path, frame_number, gui_ax):
 

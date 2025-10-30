@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import tkinter as tk
 import platform
 import ctypes

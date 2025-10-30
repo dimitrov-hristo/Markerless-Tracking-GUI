@@ -1,21 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Jun 12 08:33:58 2023
 
-@author: hd04
-"""
-
+# SPDX-License-Identifier: Apache-2.0
 import cv2
 import numpy as np
 
 def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
     cap = cv2.VideoCapture(videoPath)
     video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    print(vid_ROI)
-    print(videoPath)
-    print(video_length)
 
     frame_number=0
     light_on_array = np.ones((run_nums,1))

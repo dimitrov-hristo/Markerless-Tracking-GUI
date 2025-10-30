@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
 import time
@@ -738,7 +739,7 @@ class MyApp(tk.Tk):
             calibration_folder_name = os.path.basename(calibrationVid_directory)
             # Check if the folder name is not 'calibration'
             if calibration_folder_name != 'calibration':
-                print('goes here only if the folder is not named calibration')
+                # Enters statement only if the folder is not named calibration
                 # Create the new folder path with 'calibration' as the name
                 new_calibration_folder_path = os.path.join(os.path.dirname(calibrationVid_directory), 'calibration')            
                 # Rename the folder
@@ -890,11 +891,8 @@ class MyApp(tk.Tk):
         for thread_key in self.threads:
             if self.threads[thread_key] and self.threads[thread_key].is_alive():
                 self.stop_events[thread_key].set()
-                print("setting stop event as")
-                print(self.stop_events[thread_key].is_set())
                 time.sleep(1)
                 self.threads[thread_key].join()
-                print("thread is joined")
         
     def check_thread_status(self):
         """Check if the worker thread has finished and update the GUI accordingly."""
