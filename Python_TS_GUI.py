@@ -109,8 +109,11 @@ class MyApp(tk.Tk):
         self.check_thread_status()
 
         # Set the title of the window
-        self.title("Markerless Tracking GUI")
-
+        self.title("TrackStudio")
+        icons_folder = os.path.join(self.gui_directory,"icons")
+        icons_name = os.path.join(icons_folder,"icon")
+        self.icons = [tk.PhotoImage(file=f"{icons_name}_{s}.png") for s in (16,24,32,48,64,128,256)]
+        self.iconphoto(True,*self.icons)
         # Center the window on the screen
         self.center_window(500, 400)
 
@@ -132,7 +135,7 @@ class MyApp(tk.Tk):
         self.bg_color = "#1e1e1e"
         self.fg_color = "white"
         self.geometry("500x550")
-        self.title("Markerless Tracking GUI")
+        self.title("TrackStudio")
 
         self.content = tk.Frame(self, bg=self.bg_color)
         self.content.pack(expand=True)

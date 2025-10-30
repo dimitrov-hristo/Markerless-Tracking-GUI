@@ -1,5 +1,5 @@
 @echo off
 REM Activate the Anaconda environment
-call C:\Path\To\Anaconda\Scripts\activate.bat aniposeEnv
+call C:\Users\hrist\Anaconda3\Scripts\activate.bat aniposeEnv
 REM Run your Python script in a new minimized window
-start /b python C:\Path\To\Current\Directory\MT_GUI.py
+start /b python D:\Markerless_Tracking_GUI_git\Python_TS_GUI.py

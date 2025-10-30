@@ -65,7 +65,7 @@ if %ERRORLEVEL%==0 (
 pause
 
 
-:: --- Modify batch_execution.bat and run_gui.vbs ---
+:: --- Modify batch_execution.bat and TrackStudio.vbs ---
 
 :: --- Modify batch_execution.bat ---
 set "batch_file=batch_executable.bat"
@@ -114,7 +114,7 @@ echo Successfully updated "%batch_file%"
 
 
 :: Define the VBS file to modify
-set "vbs_file=RUN_GUI.vbs"
+set "vbs_file=TrackStudio.vbs"
 set "temp_vbs_file=%vbs_file%.new"
 
 :: Check if the VBS file exists
@@ -141,7 +141,7 @@ if exist "%temp_vbs_file%" del "%temp_vbs_file%"
 ) > "%temp_vbs_file%"
 pause
 
-:: Replace the old run_gui.vbs with the new one
+:: Replace the old TrackStudio.vbs with the new one
 move /Y "%temp_vbs_file%" "%vbs_file%"
 
 echo All tasks completed!
