@@ -1,0 +1,11 @@
+TrackStudio
+Copyright (c) 2025 TrackStudio Contributors
+
+Licensed under the Apache License, Version 2.0 (the "License").
+See the LICENSE file in this repository for the full text.
+
+Third-party notices
+-------------------
+MediaPipe — Apache-2.0 — © Google LLC
+Anipose — BSD-2-Clause — © Anipose Authors
+FFmpeg — see ffmpeg.org/legal (not bundled by default)
