@@ -7,20 +7,20 @@ Below is included further information on multi-camera recording setups in OBS, l
 
 ## Multi-camera recording setup via OBS software
 
-Video Recording – OBS
-•	Launch “n” instances of OBS studio, where “n” is the number of cameras you have.
+# Video Recording – OBS
+- Launch “n” instances of OBS studio, where “n” is the number of cameras you have.
 N.B. On each new OBS instance you will be prompted with a warning: click on Launch anyway.
-•	Place the OBS instances so that each window is fully visible (non-overlapping, with nothing obstructing the windows), ideally on a separate monitor.
-•	Starting from the top window, configure each OBS instance for their respective camera. Below is an example of 3 “Logitech Brio” cameras, with name extensions for each being camA, camB, and camC respectively. For each OBS instance:
-•	Double-click on “Brio” (under Sources).
-•	From the Device dropdown menu find the camera.
+- Place the OBS instances so that each window is fully visible (non-overlapping, with nothing obstructing the windows), ideally on a separate monitor.
+- Starting from the top window, configure each OBS instance for their respective camera. Below is an example of 3 “Logitech Brio” cameras, with name extensions for each being camA, camB, and camC respectively. For each OBS instance:
+- Double-click on “Brio” (under Sources).
+- From the Device dropdown menu find the camera.
 N.B. The 3 cameras have the same ‘computer name’, select them one after the other until you get to the relevant camera.
-•	Double-click on Configure video, move to the Camera control tab, untick the Focus auto tickbox and set the slider to zero. Click on Apply and close.
-•	Click Ok on the Properties for ‘Brio’ window.
-•	Double-click on Settings (under Controls), move to the Advanced tab and change the Filename formatting to %CCYY-%MM-%DD %hh-%mm-%ss_camX (where X is the letter – A, B or C – corresponding to the camera you are setting). Click on Apply and close.
-•	In settings -> Hotkeys: ‘Start recording’ should be CTRL + ENTER and ‘Stop recording’ should be CTRL + END
-•	Make sure you followed this procedure for all the cameras.
-Camera positioning
+- Double-click on Configure video, move to the Camera control tab, untick the Focus auto tickbox and set the slider to zero. Click on Apply and close.
+- Click Ok on the Properties for ‘Brio’ window.
+- Double-click on Settings (under Controls), move to the Advanced tab and change the Filename formatting to %CCYY-%MM-%DD %hh-%mm-%ss_camX (where X is the letter – A, B or C – corresponding to the camera you are setting). Click on Apply and close.
+- In settings -> Hotkeys: ‘Start recording’ should be CTRL + ENTER and ‘Stop recording’ should be CTRL + END
+- Make sure you followed this procedure for all the cameras.
+# Camera positioning
 •	Orient the cameras so that the workspace, the objects and the hand are visible by all the cameras at all times (or at least by 2 cameras).
 •	Every time the camera positions change a new calibration recording needs to be done.
 •	Make sure the cameras stands are well fixed, cameras must not move during a recording.
