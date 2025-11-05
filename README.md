@@ -15,7 +15,11 @@ _N.B. On each new OBS instance you will be prompted with a warning: click on Lau
 - Starting from the top window, configure each OBS instance for their respective camera. Below is an example of 3 “Logitech Brio” cameras, with name extensions for each being camA, camB, and camC respectively. For each OBS instance:
 - Double-click on “Brio” (under Sources).
 - From the Device dropdown menu find the camera.
-  
+
+<p align="center">
+  <img src="examples/images/OBS_cameraSettings_all.png" width="80%">
+</p>
+
 _N.B. The 3 cameras have the same ‘computer name’, select them one after the other until you get to the relevant camera._
 - Double-click on Configure video, move to the Camera control tab, untick the Focus auto tickbox and set the slider to zero. Click on Apply and close.
 - Click Ok on the Properties for ‘Brio’ window.
