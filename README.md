@@ -12,20 +12,28 @@ Below is included further information on multi-camera recording setups in OBS, l
   
 _N.B. On each new OBS instance you will be prompted with a warning: click on Launch anyway._
 - Place the OBS instances so that each window is fully visible (non-overlapping, with nothing obstructing the windows), ideally on a separate monitor.
-- Starting from the top window, configure each OBS instance for their respective camera. Below is an example of 3 “Logitech Brio” cameras, with name extensions for each being camA, camB, and camC respectively. For each OBS instance:
-- Double-click on “Brio” (under Sources).
-- From the Device dropdown menu find the camera.
-
-<p align="center">
-  <img src="examples/images/OBS_cameraSettings_all.png" width="80%">
-</p>
+- Starting from the top window, configure each OBS instance for their respective camera. Below is an example of 4 “Logitech Brio” cameras, with name extensions for each being camA, camB, camC, and camD respectively. For each OBS instance (see Figure 1 below):
+- Double-click on “_camD” (under Sources), which is what 1 of the Brio cameras is named as.
+- From the Device dropdown menu find the camera (Logitech Brio).
 
 _N.B. The 3 cameras have the same ‘computer name’, select them one after the other until you get to the relevant camera._
 - Double-click on Configure video, move to the Camera control tab, untick the Focus auto tickbox and set the slider to zero. Click on Apply and close.
-- Click Ok on the Properties for ‘Brio’ window.
-- Double-click on Settings (under Controls), move to the Advanced tab and change the Filename formatting to %CCYY-%MM-%DD %hh-%mm-%ss_camX (where X is the letter – A, B or C – corresponding to the camera you are setting). Click on Apply and close.
-- In settings -> Hotkeys: ‘Start recording’ should be CTRL + ENTER and ‘Stop recording’ should be CTRL + END
+- Click Ok on the Properties for ‘_camD’ OBS instance.
+
+<p align="center">
+  <img src="examples/images/OBS_cameraSettings_all.png" width="90%">
+</p>
+**Figure 1** _Example of camera settings adjustments as per the above text._
+ 
+- Double-click on Settings (under Controls), move to the Advanced tab and change the Filename formatting to %CCYY-%MM-%DD %hh-%mm-%ss_camX (where X is the letter – A, B or C – corresponding to the camera you are setting). Click on Apply and close (see Figure 2 below).
+- In settings -> Hotkeys: ‘Start recording’ should be CTRL + ENTER and ‘Stop recording’ should be CTRL + END (see Figure 2 below).
 - Make sure you followed this procedure for all the cameras.
+
+<p align="center">
+  <img src="examples/images/OBS_settings.png" width="90%">
+</p>
+**Figure 2** _Example of OBS camera naming and hotkeys settings as per the above text._
+
 ### Camera positioning
 - Orient the cameras so that the workspace, the objects and the hand are visible by all the cameras at all times (or at least by 2 cameras).
 - Every time the camera positions change a new calibration recording needs to be done.
@@ -37,10 +45,21 @@ _N.B. Always perform a calibration before starting recording with a given camera
 ## Light-based camera synchronisation
 
 One of the simplest and most effective ways to synchronise different cameras (ensure frame 1 on Camera 1 is the same as frame 1 on Camera 2) is via light or sound. Here, it’s covered how to set up LED lights for synchronisation and test the recordings and synchronisation.
+
 Things you need: (1) Arduino (mini, Uno, mega – it does not matter), (2) LED light(s), (3) Wires and resistors
+
 First, connect the LED light(s) to the Arduino, using wires and resistors as such:
+
+<p align="center">
+  <img src="examples/images/LED_wiring_example.png" width="90%">
+</p>
+
 Second, connect the Arduino to a computer via the provided USB cable.
-Third, test your recordings and synchronisation by running a script that turns on a light(s) for 5s, then turns it off for 5s, which is repeated 5 times. This ensures that you know the time difference between Light-ON and Light-OFF should be 5 seconds, and you know the number of frames that should be contained within these 5 seconds for each camera – if a camera records at 60 frames-per-second, number of frames will be 300 (60*5).
+
+Third, test your recordings and synchronisation by running a script that turns on a light(s) for 5s, then turns it off for 5s, which is repeated 5 times. Example script for this in MATLAB and Python are provided in /examples (LED_test_MATLAB.m and LED_test_Python.py).
+
+This ensures that you know the time difference between Light-ON and Light-OFF should be 5 seconds, and you know the number of frames that should be contained within these 5 seconds for each camera – if a camera records at 60 frames-per-second, number of frames will be 300 (60*5).
+
 The test is necessary not only to ensure that the light detection is set up correctly (correct ROI and LED intensity were chosen), but also that you are not losing video data. Video data can be lost due to multiple reasons, such as insufficient hardware (computer is not powerful enough), programmes that run in the background and make the recordings lag (due to interruptions), or incorrect camera setup (check USB ports and OBS).
 
 
