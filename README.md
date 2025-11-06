@@ -23,6 +23,7 @@ _N.B. The 3 cameras have the same ‘computer name’, select them one after the
 <p align="center">
   <img src="examples/images/OBS_cameraSettings_all.png" width="90%">
 </p>
+
 **Figure 1** _Example of camera settings adjustments as per the above text._
  
 - Double-click on Settings (under Controls), move to the Advanced tab and change the Filename formatting to %CCYY-%MM-%DD %hh-%mm-%ss_camX (where X is the letter – A, B or C – corresponding to the camera you are setting). Click on Apply and close (see Figure 2 below).
@@ -32,6 +33,7 @@ _N.B. The 3 cameras have the same ‘computer name’, select them one after the
 <p align="center">
   <img src="examples/images/OBS_settings.png" width="90%">
 </p>
+
 **Figure 2** _Example of OBS camera naming and hotkeys settings as per the above text._
 
 ### Camera positioning
@@ -51,7 +53,7 @@ Things you need: (1) Arduino (mini, Uno, mega – it does not matter), (2) LED l
 First, connect the LED light(s) to the Arduino, using wires and resistors as such:
 
 <p align="center">
-  <img src="examples/images/LED_wiring_example.png" width="90%">
+  <img src="examples/images/LED_wiring_example.png" width="60%">
 </p>
 
 Second, connect the Arduino to a computer via the provided USB cable.
