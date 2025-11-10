@@ -48,9 +48,9 @@ _N.B. Always perform a calibration before starting recording with a given camera
 
 One of the simplest and most effective ways to synchronise different cameras (ensure frame 1 on Camera 1 is the same as frame 1 on Camera 2) is via light or sound. Here, it’s covered how to set up LED lights for synchronisation and test the recordings and synchronisation.
 
-Things you need: (1) Arduino (mini, Uno, mega – it does not matter), (2) LED light(s), (3) Wires and resistors
+Things you need: (1) Arduino (mini, Uno, mega – it does not matter), (2) LED light(s), (3) Wires and resistor (200-250 Ohms)
 
-First, connect the LED light(s) to the Arduino, using wires and resistors as such:
+First, connect the LED light(s) to the Arduino, using the wires and resistor as such:
 
 <p align="center">
   <img src="examples/images/LED_wiring_example.png" width="60%">
