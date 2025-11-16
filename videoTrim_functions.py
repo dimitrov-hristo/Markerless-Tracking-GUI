@@ -135,7 +135,7 @@ def individualVid_trim(input_path, saving_dir, video_file_extension, start_frame
     trimmed = video.subclip((start_frame/videoFPS), (stop_frame/videoFPS) + bufferTime)
     trimmed.write_videofile(video_output_path, codec='libx264', audio_codec='aac', fps=videoFPS)
 
-def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension, file_suffix, recording_length, report_callback):
+def automatic_trim(input_path, output_path, direction, multiple_trims, ROIs, file_extension, file_suffix, recording_length, report_callback):
 
     print("AutoTrim start")
     time.sleep(1)
@@ -168,7 +168,7 @@ def automatic_trim(input_path, output_path, multiple_trims, ROIs, file_extension
                     sorted_video_files = sorted(files)
                 
                     relative_path = os.path.relpath(root, input_path)
-                    current_save_dir = os.path.join(output_path, relative_path,'videos-raw')     
+                    current_save_dir = os.path.join(output_path, direction, relative_path,'videos-raw')     
                             
                     for file_name in sorted_video_files:
 

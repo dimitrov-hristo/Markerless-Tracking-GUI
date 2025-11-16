@@ -865,9 +865,16 @@ class MyApp(tk.Tk):
                         print(f"Thread for {self.string_mapping[var_key]} started.")
                     elif var_key == 'videoTrim':
                         print("start VidTrim")
+                        if self.selected_bodyPart.get() == 1:
+                            direction = "Left_Hand"
+                        elif self.selected_bodyPart.get() == 2:
+                            direction = "Right_Hand"
+                        else:
+                            direction = "Full Body"
+
                         vidFile_suffix = self.file_suffix.get()
 
-                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.safe_gui_callback))
+                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), direction, self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.safe_gui_callback))
                         self.threads[thread_key].start()
                         print(f"Thread for {self.string_mapping[var_key]} started.")
                     else:

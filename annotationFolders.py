@@ -142,6 +142,8 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
 
             create_folder(new_dir)
             create_folder(videos_raw_folder)
+
+            create_folder_and_copy_files(config_dir, os.path.dirname(new_dir), "config.toml")
             copy_mp4_files(folder_path, videos_raw_folder)
 
     def find_and_process_folders(base_dir):
