@@ -5,7 +5,7 @@
 import cv2
 import numpy as np
 
-def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
+def detectLightChange(videoPath, vid_ROI, recording_length, run_nums, led_intensity):
     cap = cv2.VideoCapture(videoPath)
     video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -25,7 +25,7 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
     frame_off = 20 #initialisation for a frame_off number, set at 20 frames, meaning the initial 20 frames are ignored for the very first light detection to avoid errors
 
     pixelNum_threshold = 1
-    pixelIntensity_threshold = 220
+    pixelIntensity_threshold = led_intensity
     
     while True:
         ret, frame = cap.read()

@@ -532,7 +532,7 @@ class MyApp(tk.Tk):
 
         self.start_threads()
 
-    def automaticTrim_window(self, multiTrim, recLen):
+    def automaticTrim_window(self, multiTrim, recLen, LEDintensity):
         self.clear_window()
         self.geometry("840x700")
         tk.Label(self, text="Processing Messages:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).place(x=325, y=40)
@@ -553,6 +553,7 @@ class MyApp(tk.Tk):
 
         self.multi_trimming = multiTrim
         self.recording_length = recLen
+        self.led_intensity = LEDintensity
         self.number_of_selected_bodyParts = sum(1 for value in self.processing_variables.values() if value == 1)
         self.in_processing_window = True
 
@@ -874,7 +875,7 @@ class MyApp(tk.Tk):
 
                         vidFile_suffix = self.file_suffix.get()
 
-                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), direction, self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.safe_gui_callback))
+                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), direction, self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.led_intensity, self.safe_gui_callback))
                         self.threads[thread_key].start()
                         print(f"Thread for {self.string_mapping[var_key]} started.")
                     else:
@@ -1079,7 +1080,7 @@ class MyApp(tk.Tk):
         state = tk.NORMAL if self.video_ROI_location else tk.DISABLED
 
         # Add "Trim" button at the top
-        trim_button = RoundedButton(top_frame, text="Trim", command=lambda: self.automaticTrim_window(int(self.multiTrim_entry.get()),int(self.recLen_entry.get())),state=state)
+        trim_button = RoundedButton(top_frame, text="Trim", command=lambda: self.automaticTrim_window(int(self.multiTrim_entry.get()),int(self.recLen_entry.get()),int(self.lightOn_entry.get())),state=state)
         trim_button.pack()
 
         # Adjust appearance of the disabled Apply button

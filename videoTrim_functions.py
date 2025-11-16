@@ -135,7 +135,7 @@ def individualVid_trim(input_path, saving_dir, video_file_extension, start_frame
     trimmed = video.subclip((start_frame/videoFPS), (stop_frame/videoFPS) + bufferTime)
     trimmed.write_videofile(video_output_path, codec='libx264', audio_codec='aac', fps=videoFPS)
 
-def automatic_trim(input_path, output_path, direction, multiple_trims, ROIs, file_extension, file_suffix, recording_length, report_callback):
+def automatic_trim(input_path, output_path, direction, multiple_trims, ROIs, file_extension, file_suffix, recording_length, led_intensity, report_callback):
 
     print("AutoTrim start")
     time.sleep(1)
@@ -181,7 +181,7 @@ def automatic_trim(input_path, output_path, direction, multiple_trims, ROIs, fil
                             vid_ROI_name = list(filter(lambda x: file_name[-8:-4] in x, ROIs))[0]
                             vid_ROI = ROIs[vid_ROI_name]
                             print(vid_ROI)
-                            on_array,off_array,total_frames = detectLED.detectLightChange(current_video_path, vid_ROI, recording_length, multiple_trims)
+                            on_array,off_array,total_frames = detectLED.detectLightChange(current_video_path, vid_ROI, recording_length, multiple_trims, led_intensity)
                             tempArray.append(on_array)
 
                             if multiple_trims > 1:
