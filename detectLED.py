@@ -25,7 +25,7 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums):
     frame_off = 20 #initialisation for a frame_off number, set at 20 frames, meaning the initial 20 frames are ignored for the very first light detection to avoid errors
 
     pixelNum_threshold = 1
-    pixelIntensity_threshold = 245
+    pixelIntensity_threshold = 220
     
     while True:
         ret, frame = cap.read()
