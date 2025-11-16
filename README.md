@@ -3,7 +3,14 @@ TrackStudio is an interactive open-source toolkit for markerless tracking. It pr
 
 Check out the [TrackStudio paper](https://arxiv.org/abs/2511.07624) for detailed information on how to install and use TrackStudio and general advice on markerless tracking video recordings and setup.
 
+To try out the toolkit, example videos (located at examples/videos) for calibration, raw videos for trimming and tracking, as well as trimmed videos, are provided for a quick try of the workflow.
+
 Below is included further information on multi-camera recording setups in OBS, light-based approach for cameras synchronisation, and details on code implementation.
+
+<p align="center">
+  <img src="examples/images/TrackStudio_GIF.gif" width="90%">
+</p>
+
 
 ## Multi-camera recording setup via OBS software
 
