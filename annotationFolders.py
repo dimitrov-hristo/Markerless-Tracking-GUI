@@ -46,6 +46,7 @@ def process_folders(input_dir, output_dir, selected_bodypart, video_file_extensi
         if last_folder == 'videos-raw' or contains_csv_files:
 
             if mode == "Annotate 2D":
+                create_folder_and_copy_files(config_dir, os.path.dirname(parent_dir), "config.toml")
                 # Create the "2d-pose" folder next to "videos-raw"
                 for filename in os.listdir(folder_path):
                     if filename.endswith(video_file_extension):
