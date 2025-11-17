@@ -58,6 +58,7 @@ class MyApp(tk.Tk):
         self.default_multiTrim_val = tk.StringVar(value="1")
         self.default_recLen_val = tk.StringVar(value="0")
         self.default_lightOn_val = tk.StringVar(value="220")
+        self.default_pixelNumber_val = tk.StringVar(value="1")
         self.video_ROI_location = {}
         self.selected_bodyPart = tk.IntVar()
         self.suppress_trace = False
@@ -532,7 +533,7 @@ class MyApp(tk.Tk):
 
         self.start_threads()
 
-    def automaticTrim_window(self, multiTrim, recLen, LEDintensity):
+    def automaticTrim_window(self, multiTrim, recLen, LEDintensity, pixelNum):
         self.clear_window()
         self.geometry("840x700")
         tk.Label(self, text="Processing Messages:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize)).place(x=325, y=40)
@@ -554,6 +555,7 @@ class MyApp(tk.Tk):
         self.multi_trimming = multiTrim
         self.recording_length = recLen
         self.led_intensity = LEDintensity
+        self.pixel_number_threshold = pixelNum
         self.number_of_selected_bodyParts = sum(1 for value in self.processing_variables.values() if value == 1)
         self.in_processing_window = True
 
@@ -875,7 +877,7 @@ class MyApp(tk.Tk):
 
                         vidFile_suffix = self.file_suffix.get()
 
-                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), direction, self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.led_intensity, self.safe_gui_callback))
+                        self.threads[thread_key] = threading.Thread(target=videoTrim_functions.automatic_trim, args=(self.autoTrim_video_path, self.save_directory.get(), direction, self.multi_trimming, self.video_ROI_location, self.file_extension.get(), vidFile_suffix[0:4], self.recording_length, self.led_intensity, self.pixel_number_threshold, self.safe_gui_callback))
                         self.threads[thread_key].start()
                         print(f"Thread for {self.string_mapping[var_key]} started.")
                     else:
@@ -1080,7 +1082,7 @@ class MyApp(tk.Tk):
         state = tk.NORMAL if self.video_ROI_location else tk.DISABLED
 
         # Add "Trim" button at the top
-        trim_button = RoundedButton(top_frame, text="Trim", command=lambda: self.automaticTrim_window(int(self.multiTrim_entry.get()),int(self.recLen_entry.get()),int(self.lightOn_entry.get())),state=state)
+        trim_button = RoundedButton(top_frame, text="Trim", command=lambda: self.automaticTrim_window(int(self.multiTrim_entry.get()),int(self.recLen_entry.get()),int(self.lightOn_entry.get()),int(self.pixelNumber_entry.get())),state=state)
         trim_button.pack()
 
         # Adjust appearance of the disabled Apply button
@@ -1100,19 +1102,19 @@ class MyApp(tk.Tk):
         self.ax.axis('off')
         self.fig.tight_layout(pad=0.5)
 
-        # Add "Start Frame" label and input box
+        # Add "Multiple Trims" label and input box
         multiTrim_label = tk.Label(input_frame, text="Multiple trims within a video:", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         multiTrim_label.grid(row=0, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
         self.multiTrim_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_multiTrim_val, font=(self.default_fontStyle, self.default_fontSize))
         self.multiTrim_entry.grid(row=0, column=1, padx=button_xpadding, pady=button_ypadding, sticky="W")
 
-        # Add "Stop Frame" label and input box
+        # Add "Recording Length" label and input box
         recLen_label = tk.Label(input_frame, text="OPTIONAL\nRecording Length (s):", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         recLen_label.grid(row=0, column=2, padx=button_xpadding, pady=button_ypadding, sticky="E")
         self.recLen_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_recLen_val, font=(self.default_fontStyle, self.default_fontSize))
         self.recLen_entry.grid(row=0, column=3, padx=button_xpadding, pady=button_ypadding, sticky="W")    
 
-        # Add "Plot Frame" label and input box
+        # Add "Light On Pixel Intensity Threshold " label and input box
         lightOn_label = tk.Label(input_frame, text="Light On Threshold (0-255):", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
         lightOn_label.grid(row=1, column=0, padx=button_xpadding, pady=button_ypadding, sticky="W")
         self.lightOn_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_lightOn_val, font=(self.default_fontStyle, self.default_fontSize))
@@ -1120,6 +1122,12 @@ class MyApp(tk.Tk):
 
         ROI_button = RoundedButton(input_frame, text="Select ROI", command=lambda: self.ROI_selection(video_path))
         ROI_button.grid(row=1, column=2, columnspan=2, padx=button_xpadding, pady=button_ypadding, sticky="W")
+
+        # Add "Pixel number threshold" label and input box
+        pixelNumber_label = tk.Label(input_frame, text="Pixel Number Threshold", bg="#1e1e1e", fg="white", font=(self.default_fontStyle, self.default_fontSize))
+        pixelNumber_label.grid(row=1, column=4, padx=0, pady=button_ypadding, sticky="W")
+        self.pixelNumber_entry = tk.Entry(input_frame, width=textbox_width, textvariable=self.default_pixelNumber_val, font=(self.default_fontStyle, self.default_fontSize))
+        self.pixelNumber_entry.grid(row=1, column=3, padx=button_xpadding, pady=button_ypadding, sticky="W")  
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
         self.canvas.draw()
@@ -1129,6 +1137,7 @@ class MyApp(tk.Tk):
         input_frame.grid_columnconfigure(1, weight=0)
         input_frame.grid_columnconfigure(2, weight=0)
         input_frame.grid_columnconfigure(3, weight=0)
+        input_frame.grid_columnconfigure(4, weight=0)
 
         self.update_idletasks()
 

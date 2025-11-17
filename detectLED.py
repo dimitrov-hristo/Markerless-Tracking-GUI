@@ -5,7 +5,7 @@
 import cv2
 import numpy as np
 
-def detectLightChange(videoPath, vid_ROI, recording_length, run_nums, led_intensity):
+def detectLightChange(videoPath, vid_ROI, recording_length, run_nums, led_intensity, pixelNum_threshold):
     cap = cv2.VideoCapture(videoPath)
     video_length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -24,7 +24,6 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums, led_intens
     light_off_inc = 0 #indicating the number of light_off events
     frame_off = 20 #initialisation for a frame_off number, set at 20 frames, meaning the initial 20 frames are ignored for the very first light detection to avoid errors
 
-    pixelNum_threshold = 1
     pixelIntensity_threshold = led_intensity
     
     while True:
@@ -50,6 +49,12 @@ def detectLightChange(videoPath, vid_ROI, recording_length, run_nums, led_intens
         #indicates if there are any pixels lighting up in red, and a red pixel light is
         #defined as a pixel within the ROI selected that is higher than the pixel intensity
         #threshold set. The highest possible pixel intensity is 255, which represents the most intense red light
+
+        pixelNum_max = roiRed.shape[0] * roiRed.shape[1]
+
+        if pixelNum_threshold > pixelNum_max:
+            pixelNum_threshold = pixelNum_max
+            
         redPixels = sum(sum(row) for row in roiRed > pixelIntensity_threshold)
 
         #Checks if there are enough red pixels (above set threshold) and if light hasn't been on
